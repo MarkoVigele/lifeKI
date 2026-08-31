@@ -286,7 +286,6 @@ export default function App() {
     const engine = engineRef.current
     if (!engine) return
     const t = toolRef.current === 'observe' ? 'attract' : toolRef.current
-    if (t === 'observe') return
     const wasmTool = TOOL_WASM[t]
     const aux = t === 'emotion' ? emotionRef.current : t === 'storm' ? 1 : 0
     engine.sim.apply_tool(wasmTool, x, y, brushRef.current, strengthRef.current, aux)
