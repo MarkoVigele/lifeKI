@@ -1,5 +1,7 @@
 # lifeKI
 
+**Live:** [https://markovigele.github.io/lifeKI/](https://markovigele.github.io/lifeKI/)
+
 Eine lebendige Particle-Life-Welt: jedes Licht hat ein kleines neuronales Netz, Emotionen, Signale und die Fähigkeit zu träumen, zu lügen, sich zu verbünden und zu sterben.
 
 Der Kern läuft in **Rust → WebAssembly**. Die Oberfläche ist React. Das Bild entsteht auf einem hochauflösenden Canvas mit Glow, Spuren und atmosphärischer Tiefe.
