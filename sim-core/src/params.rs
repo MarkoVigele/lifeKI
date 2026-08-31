@@ -1,0 +1,107 @@
+pub const PARAM_COUNT: usize = 36;
+pub const SPECIES_MAX: usize = 6;
+pub const EMO_COUNT: usize = 7;
+pub const PERS_COUNT: usize = 6;
+
+pub const P_TIME_SCALE: usize = 0;
+pub const P_FRICTION: usize = 1;
+pub const P_MAX_SPEED: usize = 2;
+pub const P_PERCEPTION: usize = 3;
+pub const P_REPULSION: usize = 4;
+pub const P_FORCE_SCALE: usize = 5;
+pub const P_ENERGY_DRAIN: usize = 6;
+pub const P_FOOD_RATE: usize = 7;
+pub const P_FOOD_ENERGY: usize = 8;
+pub const P_REPRO_COST: usize = 9;
+pub const P_REPRO_THRESHOLD: usize = 10;
+pub const P_MUTATION: usize = 11;
+pub const P_DREAM_INTENSITY: usize = 12;
+pub const P_DREAM_FREQ: usize = 13;
+pub const P_LIE_TENDENCY: usize = 14;
+pub const P_LIE_PENALTY: usize = 15;
+pub const P_CULTURE_RATE: usize = 16;
+pub const P_WISDOM_INHERIT: usize = 17;
+pub const P_CHAOS: usize = 18;
+pub const P_BEAUTY_SELECT: usize = 19;
+pub const P_EMPATHY_RADIUS: usize = 20;
+pub const P_EMPATHY_CONTAGION: usize = 21;
+pub const P_MEMORY_DECAY: usize = 22;
+pub const P_SIGNAL_COMPLEXITY: usize = 23;
+pub const P_MUTATION_POETRY: usize = 24;
+pub const P_GOD_MOOD: usize = 25;
+pub const P_HEBBIAN: usize = 26;
+pub const P_DAY_SPEED: usize = 27;
+pub const P_NN_INFLUENCE: usize = 28;
+pub const P_SPECIES_COUNT: usize = 29;
+pub const P_SEXUAL_REPRO: usize = 30;
+pub const P_ALTRUISM: usize = 31;
+pub const P_PORTAL_RATE: usize = 32;
+pub const P_CATASTROPHE_RATE: usize = 33;
+pub const P_MAX_AGE: usize = 34;
+pub const P_COMBAT: usize = 35;
+
+pub const E_CURIOSITY: usize = 0;
+pub const E_FEAR: usize = 1;
+pub const E_AGGRO: usize = 2;
+pub const E_BELONG: usize = 3;
+pub const E_HUNGER: usize = 4;
+pub const E_PLAY: usize = 5;
+pub const E_DOM: usize = 6;
+
+pub const K_OPEN: usize = 0;
+pub const K_CAUTION: usize = 1;
+pub const K_FEROCITY: usize = 2;
+pub const K_LOYALTY: usize = 3;
+pub const K_GREED: usize = 4;
+pub const K_WHIMSY: usize = 5;
+
+pub const EV_STRIDE: usize = 5;
+pub const EV_CAP: usize = 64;
+pub const RENDER_STRIDE: usize = 8;
+pub const FOOD_CAP: usize = 420;
+pub const FOSSIL_CAP: usize = 24;
+pub const PARTICLE_CAP: usize = 4096;
+
+pub const INSPECT_LEN: usize = 48;
+pub const STAT_LEN: usize = 16;
+
+pub fn default_params() -> [f32; PARAM_COUNT] {
+    let mut p = [0.0; PARAM_COUNT];
+    p[P_TIME_SCALE] = 0.62;
+    p[P_FRICTION] = 0.89;
+    p[P_MAX_SPEED] = 1.35;
+    p[P_PERCEPTION] = 58.0;
+    p[P_REPULSION] = 15.0;
+    p[P_FORCE_SCALE] = 0.4;
+    p[P_ENERGY_DRAIN] = 0.00036;
+    p[P_FOOD_RATE] = 0.58;
+    p[P_FOOD_ENERGY] = 0.3;
+    p[P_REPRO_COST] = 0.38;
+    p[P_REPRO_THRESHOLD] = 0.78;
+    p[P_MUTATION] = 0.08;
+    p[P_DREAM_INTENSITY] = 0.35;
+    p[P_DREAM_FREQ] = 0.12;
+    p[P_LIE_TENDENCY] = 0.08;
+    p[P_LIE_PENALTY] = 0.18;
+    p[P_CULTURE_RATE] = 0.04;
+    p[P_WISDOM_INHERIT] = 0.55;
+    p[P_CHAOS] = 0.06;
+    p[P_BEAUTY_SELECT] = 0.25;
+    p[P_EMPATHY_RADIUS] = 42.0;
+    p[P_EMPATHY_CONTAGION] = 0.08;
+    p[P_MEMORY_DECAY] = 0.04;
+    p[P_SIGNAL_COMPLEXITY] = 0.65;
+    p[P_MUTATION_POETRY] = 0.3;
+    p[P_GOD_MOOD] = 0.0;
+    p[P_HEBBIAN] = 0.12;
+    p[P_DAY_SPEED] = 0.0035;
+    p[P_NN_INFLUENCE] = 0.55;
+    p[P_SPECIES_COUNT] = 6.0;
+    p[P_SEXUAL_REPRO] = 0.55;
+    p[P_ALTRUISM] = 0.2;
+    p[P_PORTAL_RATE] = 0.04;
+    p[P_CATASTROPHE_RATE] = 0.03;
+    p[P_MAX_AGE] = 2400.0;
+    p[P_COMBAT] = 0.25;
+    p
+}

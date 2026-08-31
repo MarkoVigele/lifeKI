@@ -1,0 +1,45 @@
+{
+  "name": "lifeki",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 45221",
+    "wasm": "cargo build --manifest-path sim-core/Cargo.toml --target wasm32-unknown-unknown --release && wasm-bindgen --target web --out-dir src/wasm/pkg sim-core/target/wasm32-unknown-unknown/release/anima_core.wasm",
+    "build": "tsc -b && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview --host 0.0.0.0 --port 45221",
+    "start": "node scripts/control.mjs starten",
+    "starten": "node scripts/control.mjs starten",
+    "stop": "node scripts/control.mjs stoppen",
+    "stoppen": "node scripts/control.mjs stoppen",
+    "update": "node scripts/control.mjs updaten",
+    "updaten": "node scripts/control.mjs updaten",
+    "neustart": "node scripts/control.mjs neustart",
+    "neustart-update": "node scripts/control.mjs neustart-update",
+    "version:stand": "node scripts/version.mjs status",
+    "version:stabil": "node scripts/version.mjs stable",
+    "version:test-anlegen": "node scripts/version.mjs new-test",
+    "version:test-laden": "node scripts/version.mjs open-test",
+    "version:stand-sichern": "node scripts/version.mjs save",
+    "version:stand-laden": "node scripts/version.mjs load"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.544.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "tailwind-merge": "^3.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.12",
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4",
+    "oxlint": "^1.75.0",
+    "tailwindcss": "^4.1.12",
+    "typescript": "~6.0.2",
+    "vite": "^8.2.0"
+  }

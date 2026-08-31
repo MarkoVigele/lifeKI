@@ -1,0 +1,20 @@
+dist-ssr
+*.local
+
+# Rust
+sim-core/target
+target
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+dist-ssr
+*.local
+
+# Local runtime / version snapshots
+.anima/
+
+# Rust
+sim-core/target
+target

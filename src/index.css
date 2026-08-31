@@ -1,0 +1,91 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Fraunces', ui-serif, Georgia, serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --color-ink: #e8e6f0;
+  --color-mute: #8b8898;
+  --color-void: #010103;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  background: #010103;
+  color: #e8e6f0;
+  font-family: var(--font-sans);
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.anima-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 14px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.anima-slider::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #2a2438, #5eead4);
+}
+
+.anima-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4.5px;
+  border-radius: 99px;
+  background: #f4f1ea;
+  box-shadow: 0 0 0 3px rgba(94, 234, 212, 0.18);
+}
+
+.anima-slider::-moz-range-track {
+  height: 3px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #2a2438, #5eead4);
+}
+
+.anima-slider::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 99px;
+  background: #f4f1ea;
+}
+
+.panel {
+  background: rgba(8, 9, 14, 0.72);
+  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 99px;
+}
