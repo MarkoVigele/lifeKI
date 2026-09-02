@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { ChevronDown, Download, SlidersHorizontal, Star, Trash2, Upload } from 'lucide-react'
 import { SwipeSidebar } from './SwipeSidebar'
 import { SliderField } from './SliderField'
@@ -60,8 +60,13 @@ export function ControlDock({
   complexity,
   onComplexity,
 }: Props) {
-  const [openId, setOpenId] = useState('presets')
+  const [openId, setOpenId] = useState('')
+  const [wide, setWide] = useState(false)
   const mode = modeFromComplexity(complexity)
+
+  useEffect(() => {
+    if (!open) setWide(false)
+  }, [open])
   const full = complexity >= MAX_COMPLEXITY
   const allowedSliders = COMPLEXITY_SLIDERS[complexity] ?? []
   const allowedPresets = COMPLEXITY_PRESETS[complexity] ?? []
@@ -121,34 +126,34 @@ export function ControlDock({
         </div>
         <div className="dock-scroll scroll-thin px-2.5 py-1 md:px-3">
           <Section id="presets" title="Szenen" openId={openId} setOpenId={setOpenId}>
-            <div className="space-y-4">
+            <div className="space-y-2">
               {PRESET_CATEGORIES.map((cat) => {
                 const items = presets.filter((p) => p.category === cat.id)
                 if (items.length === 0) return null
                 return (
                   <div key={cat.id}>
-                    <div className="mb-1.5 px-0.5">
-                      <div className="text-[10px] tracking-[0.18em] text-teal-200/70 uppercase">{cat.title}</div>
-                      <p className="mt-0.5 text-[10px] leading-snug text-zinc-600">{cat.hint}</p>
+                    <div className="mb-1 px-0.5">
+                      <div className="truncate text-[9px] tracking-[0.16em] text-teal-200/70 uppercase">{cat.title}</div>
+                      <p className="mt-0.5 hidden truncate text-[9px] leading-snug text-zinc-600 md:block">{cat.hint}</p>
                     </div>
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-1 gap-1">
                       {items.map((p) => (
                         <button
                           key={p.id}
                           type="button"
                           onClick={() => onPreset(p.id)}
                           className={cn(
-                            'min-h-11 rounded-2xl border px-3 py-2 text-left md:min-h-0',
+                            'min-w-0 overflow-hidden rounded-xl border px-2 py-1.5 text-left',
                             presetId === p.id
                               ? 'border-teal-300/30 bg-teal-300/8'
                               : 'border-white/6 bg-white/3 hover:bg-white/6',
                           )}
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="text-[13px] text-zinc-100">{p.name}</span>
-                            <span className="text-[9px] tracking-wider text-zinc-500 uppercase">{p.tag}</span>
+                          <div className="flex min-w-0 items-center justify-between gap-1.5">
+                            <span className="min-w-0 truncate text-[11px] leading-tight text-zinc-100">{p.name}</span>
+                            <span className="shrink-0 text-[8px] tracking-wider text-zinc-500 uppercase">{p.tag}</span>
                           </div>
-                          <p className="mt-1 text-[10px] leading-snug text-zinc-500">{p.blurb}</p>
+                          <p className="mt-0.5 truncate text-[9px] leading-tight text-zinc-500">{p.blurb}</p>
                         </button>
                       ))}
                     </div>
@@ -294,9 +299,14 @@ export function ControlDock({
       ) : null}
 
       {open ? (
-        <div className="pointer-events-none absolute top-0 right-0 z-30 flex h-[calc(100dvh-4.5rem)] min-h-0 w-[min(240px,62%)] flex-col pt-[max(0.35rem,env(safe-area-inset-top))] md:hidden">
+        <div className="pointer-events-none absolute top-0 right-0 z-30 flex h-[calc(100dvh-4.5rem)] min-h-0 w-max max-w-[80vw] flex-col pt-[max(0.35rem,env(safe-area-inset-top))] md:hidden">
           <div className="pointer-events-auto flex h-full min-h-0 flex-col">
-            <SwipeSidebar onClose={onToggle}>
+            <SwipeSidebar
+              stage={wide ? 'wide' : 'narrow'}
+              onExpand={() => setWide(true)}
+              onCollapse={() => setWide(false)}
+              onClose={onToggle}
+            >
               <div className="panel flex h-full min-h-0 w-full flex-col rounded-l-2xl border-y-0 border-r-0">
                 {renderFields()}
               </div>
@@ -380,19 +390,25 @@ function Section({
       <button
         type="button"
         onClick={() => setOpenId(open ? '' : id)}
-        className="flex min-h-9 w-full items-center justify-between py-1.5 text-left text-[11px] tracking-wide text-zinc-300 md:min-h-0"
+        className={cn(
+          'flex min-h-8 w-full items-center justify-between py-1 text-left text-[11px] tracking-wide text-zinc-300 md:min-h-0',
+          open && 'sticky top-0 z-10 bg-[rgba(8,9,14,0.94)] backdrop-blur-md',
+        )}
       >
         {title}
-        <ChevronDown size={13} className={cn('text-zinc-500 transition-transform', open && 'rotate-180')} />
+        <span className="flex shrink-0 items-center gap-1 text-zinc-500">
+          {open ? <span className="text-[10px] tracking-wide text-zinc-300 uppercase">Zu</span> : null}
+          <ChevronDown size={13} className={cn('transition-transform', open && 'rotate-180')} />
+        </span>
       </button>
-      {open ? <div className="pb-2">{children}</div> : null}
+      {open ? <div className="pb-1.5">{children}</div> : null}
     </div>
   )
 }
 
 function Toggle({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex min-h-9 w-full items-center justify-between py-1 text-[11px] text-zinc-400 md:min-h-0">
+    <button type="button" onClick={onClick} className="flex min-h-7 w-full items-center justify-between py-0.5 text-[10px] text-zinc-400 md:min-h-0">
       {label}
       <span className={cn('h-4 w-7 rounded-full', on ? 'bg-teal-300/70' : 'bg-white/10')}>
         <span className={cn('block h-4 w-4 rounded-full bg-white transition-transform', on ? 'translate-x-3' : 'translate-x-0')} />

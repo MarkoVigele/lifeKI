@@ -1,11 +1,19 @@
 import { useRef, useState, type PointerEvent, type ReactNode } from 'react'
 
-const THRESHOLD = 72
+const SNAP = 56
+
+export type DockStage = 'narrow' | 'wide'
 
 export function SwipeSidebar({
+  stage,
+  onExpand,
+  onCollapse,
   onClose,
   children,
 }: {
+  stage: DockStage
+  onExpand: () => void
+  onCollapse: () => void
   onClose: () => void
   children: ReactNode
 }) {
@@ -14,13 +22,20 @@ export function SwipeSidebar({
   const [dx, setDx] = useState(0)
   const [dragging, setDragging] = useState(false)
 
-  const finish = () => {
-    const moved = dxRef.current
+  const reset = () => {
     startX.current = null
     dxRef.current = 0
     setDragging(false)
     setDx(0)
-    if (moved > THRESHOLD) onClose()
+  }
+
+  const finish = () => {
+    const moved = dxRef.current
+    reset()
+    if (stage === 'wide') {
+      if (moved > SNAP) onCollapse()
+    } else if (moved > SNAP) onClose()
+    else if (moved < -SNAP) onExpand()
   }
 
   const down = (e: PointerEvent<HTMLDivElement>) => {
@@ -32,17 +47,38 @@ export function SwipeSidebar({
 
   const move = (e: PointerEvent<HTMLDivElement>) => {
     if (startX.current == null) return
-    const next = Math.max(0, e.clientX - startX.current)
+    const raw = e.clientX - startX.current
+    if (stage === 'narrow' && raw < -SNAP) {
+      reset()
+      onExpand()
+      return
+    }
+    if (stage === 'wide' && raw > SNAP) {
+      reset()
+      onCollapse()
+      return
+    }
+    const next = stage === 'wide' ? Math.max(0, raw) : raw
     dxRef.current = next
     setDx(next)
   }
 
+  const closeShift = Math.max(0, dx)
+  const expandPx = stage === 'narrow' ? Math.min(-Math.min(0, dx), 120) : 0
+  const width =
+    stage === 'wide'
+      ? 'min(288px, 80vw)'
+      : expandPx > 0
+        ? `min(288px, calc(48vw + ${expandPx}px))`
+        : 'min(176px, 48vw)'
+
   return (
     <div
-      className="relative flex h-full min-h-0 w-full flex-col"
+      className="relative flex h-full min-h-0 flex-col"
       style={{
-        transform: `translateX(${dx}px)`,
-        transition: dragging ? 'none' : 'transform 180ms ease',
+        width,
+        transform: `translateX(${closeShift}px)`,
+        transition: dragging ? 'none' : 'transform 180ms ease, width 180ms ease',
       }}
     >
       <div

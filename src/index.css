@@ -72,18 +72,18 @@ select {
 
 @media (max-width: 767px) {
   .anima-slider {
-    height: 44px;
+    height: 28px;
   }
 
   .anima-slider::-webkit-slider-thumb {
-    width: 28px;
-    height: 28px;
-    margin-top: -12.5px;
+    width: 20px;
+    height: 20px;
+    margin-top: -8.5px;
   }
 
   .anima-slider::-moz-range-thumb {
-    width: 28px;
-    height: 28px;
+    width: 20px;
+    height: 20px;
   }
 }
 
