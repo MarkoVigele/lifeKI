@@ -4,25 +4,22 @@ import { cn } from '@/lib/utils'
 type Props = {
   open: boolean
   step: number
-  complexity: number
   dockOpen?: boolean
   onStep: (n: number) => void
   onClose: () => void
-  onComplexity: (n: number) => void
 }
 
-export function Tutorial({ open, step, complexity, dockOpen = false, onStep, onClose, onComplexity }: Props) {
+export function Tutorial({ open, step, dockOpen = false, onStep, onClose }: Props) {
   if (!open) return null
   const page = TUTORIAL_STEPS[step]
   const last = step === TUTORIAL_STEPS.length - 1
-  const unlocksTo = Math.min(4, step + 1)
 
   return (
     <div
       className={cn(
         'pointer-events-auto absolute z-40 overflow-y-auto scroll-thin',
-        'top-[max(5.5rem,calc(env(safe-area-inset-top)+4.75rem))] left-3 w-[min(68vw,240px)] max-h-[min(34svh,260px)]',
-        'md:top-[168px] md:right-3 md:left-auto md:w-[min(380px,36vw)] md:max-h-[min(56vh,520px)]',
+        'top-[max(2.25rem,calc(env(safe-area-inset-top)+1.75rem))] left-3 w-[min(68vw,240px)] max-h-[min(34svh,260px)]',
+        'md:top-[52px] md:right-3 md:left-auto md:w-[min(380px,36vw)] md:max-h-[min(56vh,520px)]',
         dockOpen && 'md:right-[400px]',
       )}
     >
@@ -78,15 +75,6 @@ export function Tutorial({ open, step, complexity, dockOpen = false, onStep, onC
           >
             {last ? 'Fertig' : 'Weiter'}
           </button>
-          {complexity < unlocksTo ? (
-            <button
-              type="button"
-              onClick={() => onComplexity(unlocksTo)}
-              className={cn('min-h-11 rounded-xl px-3 py-1.5 text-[12px] text-amber-100 md:min-h-0 md:text-[11px]', 'bg-amber-300/12')}
-            >
-              Nächste Ebene freischalten
-            </button>
-          ) : null}
         </div>
         <p className="mt-3 hidden text-[10px] text-zinc-600 md:block">
           Taste T öffnet diese Anleitung wieder. Du musst nicht alles auf einmal verstehen.

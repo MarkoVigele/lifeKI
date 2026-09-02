@@ -75,7 +75,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
       'Katastrophen, Portale, Gott-Laune und Chaos sind optional. Sie machen die Welt launisch — erst einschalten, wenn du das ruhige Leben verstanden hast.',
       'Dieses Tutorial bleibt über das Buch-Symbol erreichbar. Taste T. Du kannst jederzeit wieder auf die Erste Lichtung zurück.',
     ],
-    tryThis: 'Wenn du soweit bist: „Alles zeigen“ und eine andere Welt wählen. Oder hierbleiben und nur zuschauen.',
+    tryThis: 'Wenn du soweit bist: in Gesetze auf Vollständig tippen und eine andere Welt wählen. Oder hierbleiben und nur zuschauen.',
     sliders: [
       { key: 'godMood', effect: 'Gott-Laune — plus = Spiel und Zugehörigkeit, minus = Furcht und Härte.' },
       { key: 'catastropheRate', effect: 'Katastrophen — Beben, Blüte, Pest. Selten halten, sonst wird es unlesbar.' },
@@ -121,6 +121,23 @@ export const COMPLEXITY_PRESETS: string[][] = [
 ]
 
 export const COMPLEXITY_LABEL = ['Zuschauen', 'Eingreifen', 'Gefühle', 'Generationen', 'Alles']
+
+/** Three visible modes. Maps onto COMPLEXITY_* rows 0 / 2 / 4. */
+export const MODE_LABELS = ['Simpel', 'Normal', 'Vollständig'] as const
+export const MODE_LEVELS = [0, 2, 4] as const
+export const DEFAULT_COMPLEXITY = 2
+
+export function snapComplexity(n: number): number {
+  if (n >= 4) return 4
+  if (n >= 2) return 2
+  return 0
+}
+
+export function modeFromComplexity(n: number): 0 | 1 | 2 {
+  if (n >= 4) return 2
+  if (n >= 2) return 1
+  return 0
+}
 
 export function firstLightParams(): Float32Array {
   const p = defaultParams()
@@ -170,14 +187,15 @@ export function liveCaption(stats: EngineStats | null): string {
 export function loadGuide(): { seen: boolean; complexity: number } {
   try {
     const raw = localStorage.getItem(GUIDE_KEY)
-    if (!raw) return { seen: false, complexity: 0 }
+    if (!raw) return { seen: false, complexity: DEFAULT_COMPLEXITY }
     const data = JSON.parse(raw) as { seen?: boolean; complexity?: number }
+    const rawLevel = Number(data.complexity)
     return {
       seen: Boolean(data.seen),
-      complexity: Math.min(MAX_COMPLEXITY, Math.max(0, Number(data.complexity) || 0)),
+      complexity: Number.isFinite(rawLevel) ? snapComplexity(rawLevel) : DEFAULT_COMPLEXITY,
     }
   } catch {
-    return { seen: false, complexity: 0 }
+    return { seen: false, complexity: DEFAULT_COMPLEXITY }
   }
 }
 

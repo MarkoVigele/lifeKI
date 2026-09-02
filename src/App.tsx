@@ -520,26 +520,15 @@ export default function App() {
             paused={paused}
             presetName={currentPreset}
             onOpenTutorial={() => setTutorialOpen(true)}
-            complexity={complexity}
           />
           <Tutorial
             open={tutorialOpen}
             step={tutorialStep}
-            complexity={complexity}
             dockOpen={dockOpen}
             onStep={setTutorialStep}
             onClose={() => {
               setTutorialOpen(false)
               saveGuide(true, complexity)
-            }}
-            onComplexity={(n) => {
-              setComplexity(n)
-              saveGuide(true, n)
-              const allowed = COMPLEXITY_TOOLS[n]
-              if (!allowed.includes(toolRef.current)) {
-                toolRef.current = 'observe'
-                setTool('observe')
-              }
             }}
           />
           <Inspector

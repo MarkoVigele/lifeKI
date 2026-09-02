@@ -39,7 +39,7 @@ export function SwipeSidebar({
 
   return (
     <div
-      className="relative h-full w-full"
+      className="relative flex h-full min-h-0 w-full flex-col"
       style={{
         transform: `translateX(${dx}px)`,
         transition: dragging ? 'none' : 'transform 180ms ease',
@@ -56,7 +56,7 @@ export function SwipeSidebar({
       >
         <span className="h-11 w-1 rounded-full bg-white/30" />
       </div>
-      {children}
+      <div className="flex h-full min-h-0 w-full flex-col">{children}</div>
     </div>
   )
 }

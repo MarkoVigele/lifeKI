@@ -29,7 +29,7 @@ export function SliderField({ label, hint, value, min, max, step, onChange, form
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
       />
-      {hint ? <p className="mt-0.5 text-[10px] leading-snug text-zinc-600">{hint}</p> : null}
+      {hint ? <p className="mt-0.5 hidden text-[10px] leading-snug text-zinc-600 md:block">{hint}</p> : null}
     </label>
   )
 }

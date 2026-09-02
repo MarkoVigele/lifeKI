@@ -4,7 +4,7 @@ import { SwipeSidebar } from './SwipeSidebar'
 import { SliderField } from './SliderField'
 import { PARAM_GROUPS, type ParamKey } from '@/lib/params'
 import { PRESET_CATEGORIES, PRESETS } from '@/lib/presets'
-import { COMPLEXITY_LABEL, COMPLEXITY_PRESETS, COMPLEXITY_SLIDERS, MAX_COMPLEXITY } from '@/lib/tutorial'
+import { COMPLEXITY_PRESETS, COMPLEXITY_SLIDERS, MAX_COMPLEXITY, MODE_LABELS, MODE_LEVELS, modeFromComplexity } from '@/lib/tutorial'
 import { SLOT_COUNT, type SaveSlot } from '@/lib/saves'
 import { cn } from '@/lib/utils'
 import type { VisualSettings } from '@/render/renderer'
@@ -60,7 +60,8 @@ export function ControlDock({
   complexity,
   onComplexity,
 }: Props) {
-  const [openId, setOpenId] = useState('guide')
+  const [openId, setOpenId] = useState('presets')
+  const mode = modeFromComplexity(complexity)
   const full = complexity >= MAX_COMPLEXITY
   const allowedSliders = COMPLEXITY_SLIDERS[complexity] ?? []
   const allowedPresets = COMPLEXITY_PRESETS[complexity] ?? []
@@ -72,49 +73,53 @@ export function ControlDock({
     })).filter((g) => g.sliders.length > 0)
   }, [allowedSliders, full])
   const presets = full ? PRESETS : PRESETS.filter((p) => allowedPresets.includes(p.id))
-  const Fields = () => (
+  const renderFields = () => (
     <>
-        <div className="sticky top-0 z-10 shrink-0 border-b border-white/6 bg-[rgba(8,9,14,0.92)] px-4 py-3 md:static md:bg-transparent md:py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="font-serif text-xl italic">Gesetze</div>
+        <div className="shrink-0 border-b border-white/6 px-2.5 py-2 md:px-3 md:py-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[13px] tracking-[0.14em] text-zinc-200 uppercase">Gesetze</div>
             <button
               type="button"
               onClick={onToggle}
-              className="min-h-11 min-w-11 rounded-xl px-3 text-[13px] text-zinc-200 hover:text-zinc-50 md:min-h-8 md:min-w-0 md:px-2 md:text-[11px] md:text-zinc-500 md:hover:text-zinc-200"
+              className="min-h-9 min-w-9 rounded-lg px-2 text-[12px] text-zinc-200 hover:text-zinc-50 md:min-h-7 md:min-w-0 md:text-[11px] md:text-zinc-500 md:hover:text-zinc-200"
             >
               <span className="md:hidden">Fertig</span>
               <span className="hidden md:inline">einklappen</span>
             </button>
           </div>
-          <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
-            Ebene {COMPLEXITY_LABEL[complexity]}. Die Anleitung erklärt jeden Regler, bevor er erscheint.
-          </p>
-          <button
-            type="button"
-            onClick={onNewWorld}
-            className="mt-3 min-h-11 w-full rounded-2xl bg-teal-300/12 px-3 py-2 text-[12px] text-teal-100 hover:bg-teal-300/18 md:min-h-0"
+          <div
+            className="mt-1.5 grid grid-cols-3 gap-0.5 rounded-lg bg-white/6 p-0.5"
+            role="tablist"
+            aria-label="Modus"
           >
-            Neue Welt aus diesen Gesetzen
-          </button>
-        </div>
-        <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-3 py-2">
-          <Section id="guide" title="Ebene" openId={openId} setOpenId={setOpenId}>
-            <div className="flex flex-wrap gap-1.5 pb-1">
-              {COMPLEXITY_LABEL.map((label, i) => (
+            {MODE_LABELS.map((label, i) => {
+              const active = mode === i
+              return (
                 <button
                   key={label}
                   type="button"
-                  onClick={() => onComplexity(i)}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => onComplexity(MODE_LEVELS[i])}
                   className={cn(
-                    'min-h-11 rounded-full px-3 text-[12px] md:min-h-0 md:px-2.5 md:py-1 md:text-[10px]',
-                    complexity === i ? 'bg-teal-300/18 text-teal-100' : 'bg-white/5 text-zinc-500 hover:text-zinc-300',
+                    'min-h-8 rounded-md px-0.5 text-[10px] leading-tight tracking-wide md:min-h-7 md:text-[11px]',
+                    active ? 'bg-teal-300/18 text-teal-100' : 'text-zinc-500 hover:text-zinc-300',
                   )}
                 >
                   {label}
                 </button>
-              ))}
-            </div>
-          </Section>
+              )
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={onNewWorld}
+            className="mt-1.5 min-h-8 w-full rounded-lg bg-teal-300/12 px-2 text-[11px] text-teal-100 hover:bg-teal-300/18 md:min-h-7"
+          >
+            Neue Welt
+          </button>
+        </div>
+        <div className="dock-scroll scroll-thin px-2.5 py-1 md:px-3">
           <Section id="presets" title="Szenen" openId={openId} setOpenId={setOpenId}>
             <div className="space-y-4">
               {PRESET_CATEGORIES.map((cat) => {
@@ -289,11 +294,11 @@ export function ControlDock({
       ) : null}
 
       {open ? (
-        <div className="pointer-events-none absolute top-0 right-0 z-30 h-[calc(100dvh-4.5rem)] w-[min(240px,62%)] pt-[max(0.35rem,env(safe-area-inset-top))] md:hidden">
-          <div className="pointer-events-auto h-full">
+        <div className="pointer-events-none absolute top-0 right-0 z-30 flex h-[calc(100dvh-4.5rem)] min-h-0 w-[min(240px,62%)] flex-col pt-[max(0.35rem,env(safe-area-inset-top))] md:hidden">
+          <div className="pointer-events-auto flex h-full min-h-0 flex-col">
             <SwipeSidebar onClose={onToggle}>
-              <div className="panel flex h-full min-h-0 w-full flex-col overflow-hidden rounded-l-2xl border-y-0 border-r-0">
-                <Fields />
+              <div className="panel flex h-full min-h-0 w-full flex-col rounded-l-2xl border-y-0 border-r-0">
+                {renderFields()}
               </div>
             </SwipeSidebar>
           </div>
@@ -302,12 +307,12 @@ export function ControlDock({
 
       <aside
         className={cn(
-          'pointer-events-auto absolute top-0 right-0 z-30 hidden h-full w-[360px] flex-col transition-transform duration-300 md:flex',
+          'pointer-events-auto absolute top-0 right-0 z-30 hidden h-full min-h-0 w-[360px] flex-col transition-transform duration-300 md:flex',
           open ? 'translate-x-0' : 'translate-x-full',
         )}
       >
-        <div className="panel flex h-full min-h-0 w-full flex-col overflow-hidden rounded-none rounded-l-3xl border-y-0 border-r-0">
-          <Fields />
+        <div className="panel flex h-full min-h-0 w-full flex-col rounded-none rounded-l-3xl border-y-0 border-r-0">
+          {renderFields()}
         </div>
       </aside>
     </>
@@ -371,23 +376,23 @@ function Section({
 }) {
   const open = openId === id
   return (
-    <div className="border-b border-white/6 py-1">
+    <div className="border-b border-white/6">
       <button
         type="button"
         onClick={() => setOpenId(open ? '' : id)}
-        className="flex min-h-11 w-full items-center justify-between py-2 text-left text-[12px] tracking-wide text-zinc-300 md:min-h-0"
+        className="flex min-h-9 w-full items-center justify-between py-1.5 text-left text-[11px] tracking-wide text-zinc-300 md:min-h-0"
       >
         {title}
-        <ChevronDown size={14} className={cn('text-zinc-500 transition-transform', open && 'rotate-180')} />
+        <ChevronDown size={13} className={cn('text-zinc-500 transition-transform', open && 'rotate-180')} />
       </button>
-      {open ? <div className="pb-3">{children}</div> : null}
+      {open ? <div className="pb-2">{children}</div> : null}
     </div>
   )
 }
 
 function Toggle({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex min-h-11 w-full items-center justify-between py-1.5 text-[11px] text-zinc-400 md:min-h-0">
+    <button type="button" onClick={onClick} className="flex min-h-9 w-full items-center justify-between py-1 text-[11px] text-zinc-400 md:min-h-0">
       {label}
       <span className={cn('h-4 w-7 rounded-full', on ? 'bg-teal-300/70' : 'bg-white/10')}>
         <span className={cn('block h-4 w-4 rounded-full bg-white transition-transform', on ? 'translate-x-3' : 'translate-x-0')} />
