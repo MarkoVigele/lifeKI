@@ -63,6 +63,7 @@ pub struct World {
     next_id: u32,
     params: [f32; PARAM_COUNT],
     matrix: [f32; SPECIES_MAX * SPECIES_MAX],
+    particle_limit: usize,
     particles: Vec<Particle>,
     food: Vec<Food>,
     spatial: SpatialHash,
@@ -99,6 +100,7 @@ impl World {
             next_id: 1,
             params: default_params(),
             matrix: default_matrix(),
+            particle_limit: PARTICLE_CAP,
             particles: Vec::with_capacity(cap),
             food: Vec::with_capacity(FOOD_CAP),
             spatial: SpatialHash::new(cap),
@@ -264,6 +266,18 @@ impl World {
         self.matrix[..n].copy_from_slice(&data[..n]);
     }
 
+    fn spawn_cap(&self) -> usize {
+        self.particle_limit.min(PARTICLE_CAP)
+    }
+
+    pub fn set_particle_limit(&mut self, n: u32) {
+        self.particle_limit = (n as usize).clamp(8, PARTICLE_CAP);
+    }
+
+    pub fn particle_limit(&self) -> u32 {
+        self.spawn_cap() as u32
+    }
+
     pub fn resize(&mut self, width: f32, height: f32) {
         self.w = width.max(320.0);
         self.h = height.max(240.0);
@@ -274,7 +288,7 @@ impl World {
     }
 
     pub fn seed_count(&mut self, count: u32) {
-        let want = (count as usize).clamp(8, PARTICLE_CAP);
+        let want = (count as usize).clamp(8, self.spawn_cap());
         if self.particles.len() > want {
             self.particles.truncate(want);
         }
@@ -992,7 +1006,7 @@ impl World {
     }
 
     fn reproduce(&mut self, dt: f32) {
-        if self.particles.len() >= PARTICLE_CAP {
+        if self.particles.len() >= self.spawn_cap() {
             return;
         }
         let thr = self.params[P_REPRO_THRESHOLD];
@@ -1008,7 +1022,7 @@ impl World {
         let mut births: Vec<Particle> = Vec::new();
 
         for i in 0..n {
-            if self.particles.len() + births.len() >= PARTICLE_CAP {
+            if self.particles.len() + births.len() >= self.spawn_cap() {
                 break;
             }
             let p_age = self.particles[i].age;
@@ -1138,7 +1152,7 @@ impl World {
 
         // keep a living floor so the world never goes dark
         if self.particles.len() < 24 {
-            let add = 40.min(PARTICLE_CAP - self.particles.len());
+            let add = 40.min(self.spawn_cap().saturating_sub(self.particles.len()));
             for k in 0..add {
                 if !self.fossils.is_empty() && self.rng.chance(0.45) {
                     let fi = (self.rng.f32() * self.fossils.len() as f32) as usize;
@@ -1215,7 +1229,7 @@ impl World {
     }
 
     fn revive_fossil_inner(&mut self, index: usize) {
-        if index >= self.fossils.len() || self.particles.len() >= PARTICLE_CAP {
+        if index >= self.fossils.len() || self.particles.len() >= self.spawn_cap() {
             return;
         }
         let f = self.fossils[index].clone();
@@ -1229,7 +1243,7 @@ impl World {
 
     pub fn revive_fossil(&mut self, index: u32, x: f32, y: f32) {
         let i = index as usize;
-        if i >= self.fossils.len() || self.particles.len() >= PARTICLE_CAP {
+        if i >= self.fossils.len() || self.particles.len() >= self.spawn_cap() {
             return;
         }
         let f = self.fossils[i].clone();
@@ -1610,7 +1624,7 @@ impl World {
     }
 
     pub fn inject_mind(&mut self, data: &[f32]) {
-        if data.len() < 8 + PERS_COUNT + WEIGHTS || self.particles.len() >= PARTICLE_CAP {
+        if data.len() < 8 + PERS_COUNT + WEIGHTS || self.particles.len() >= self.spawn_cap() {
             return;
         }
         let mut pers = [0.0; PERS_COUNT];

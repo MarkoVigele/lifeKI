@@ -10,6 +10,7 @@ type Props = {
   memoryMb: number
   paused: boolean
   presetName: string
+  particleCap: number
   onOpenTutorial: () => void
 }
 
@@ -20,6 +21,7 @@ export function Hud({
   memoryMb,
   paused,
   presetName,
+  particleCap,
   onOpenTutorial,
 }: Props) {
   const [open, setOpen] = useState(false)
@@ -44,10 +46,10 @@ export function Hud({
         {open ? (
           <span className="mt-1 grid gap-0.5 font-mono text-[10px] leading-snug text-white/48">
             <span>
-              {stats ? Math.round(stats.alive) : '—'} leben · {formatNum(memoryMb, 1)} MB
+              {stats ? Math.round(stats.alive) : '—'} leben · Limit {Math.round(particleCap)}
             </span>
             <span>
-              {formatNum(stepMs, 1)} ms
+              {formatNum(stepMs, 1)} ms · {formatNum(memoryMb, 1)} MB
               {paused ? ' · gehalten' : ''}
             </span>
             <span className="max-w-[11rem] truncate text-white/32">{presetName}</span>

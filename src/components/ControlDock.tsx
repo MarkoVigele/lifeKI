@@ -7,7 +7,12 @@ import { PRESET_CATEGORIES, PRESETS } from '@/lib/presets'
 import { COMPLEXITY_PRESETS, COMPLEXITY_SLIDERS, MAX_COMPLEXITY, MODE_LABELS, MODE_LEVELS, modeFromComplexity } from '@/lib/tutorial'
 import { SLOT_COUNT, type SaveSlot } from '@/lib/saves'
 import { cn } from '@/lib/utils'
-import type { RenderFps, VisualSettings } from '@/render/renderer'
+import {
+  PARTICLE_CAP_MAX,
+  PARTICLE_CAP_MIN,
+  type RenderFps,
+  type VisualSettings,
+} from '@/render/renderer'
 
 const RENDER_FPS_OPTIONS: { value: RenderFps; label: string }[] = [
   { value: 30, label: '30' },
@@ -228,6 +233,16 @@ export function ControlDock({
                 })}
               </div>
             </div>
+            <SliderField
+              label="Teilchen-Limit"
+              hint="Keine neuen Geburten über diesem Wert. Wer schon lebt, bleibt, bis es stirbt. Auf dem Handy lieber niedrig halten."
+              value={visual.particleCap}
+              min={PARTICLE_CAP_MIN}
+              max={PARTICLE_CAP_MAX}
+              step={50}
+              format={(v) => v.toFixed(0)}
+              onChange={(v) => onVisual({ ...visual, particleCap: Math.round(v) })}
+            />
             <SliderField
               label="Spuren"
               hint="Kurzer Schweif hinter jedem Licht. Links = fast keins, rechts = länger — sie verblassen immer."

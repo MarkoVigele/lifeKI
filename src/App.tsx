@@ -9,7 +9,14 @@ import { defaultParams, DEFAULT_MATRIX, type ParamKey } from '@/lib/params'
 import { PRESETS } from '@/lib/presets'
 import { exportSlot, importSlot, loadSlots, persistSlots, writeAutosave, type SaveSlot } from '@/lib/saves'
 import { COMPLEXITY_TOOLS, FIRST_LIGHT_COUNT, loadGuide, saveGuide } from '@/lib/tutorial'
-import { Renderer, type RenderFps, type VisualSettings } from '@/render/renderer'
+import {
+  clampParticleCap,
+  defaultParticleCap,
+  PARTICLE_CAP_DESKTOP,
+  Renderer,
+  type RenderFps,
+  type VisualSettings,
+} from '@/render/renderer'
 
 const VIS_KEY = 'lifeki.visual.v1'
 
@@ -27,6 +34,7 @@ const DEFAULT_VISUAL: VisualSettings = {
   biomes: true,
   beautyMode: false,
   renderFps: 60,
+  particleCap: PARTICLE_CAP_DESKTOP,
 }
 
 function parseRenderFps(value: unknown): RenderFps {
@@ -34,14 +42,24 @@ function parseRenderFps(value: unknown): RenderFps {
   return 60
 }
 
+function parseParticleCap(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return clampParticleCap(value)
+  return defaultParticleCap()
+}
+
 function loadVisual(): VisualSettings {
   try {
     const raw = localStorage.getItem(VIS_KEY)
-    if (!raw) return { ...DEFAULT_VISUAL }
+    if (!raw) return { ...DEFAULT_VISUAL, particleCap: defaultParticleCap() }
     const data = JSON.parse(raw) as Partial<VisualSettings>
-    return { ...DEFAULT_VISUAL, ...data, renderFps: parseRenderFps(data.renderFps) }
+    return {
+      ...DEFAULT_VISUAL,
+      ...data,
+      renderFps: parseRenderFps(data.renderFps),
+      particleCap: parseParticleCap(data.particleCap),
+    }
   } catch {
-    return { ...DEFAULT_VISUAL }
+    return { ...DEFAULT_VISUAL, particleCap: defaultParticleCap() }
   }
 }
 
@@ -132,10 +150,12 @@ export default function App() {
       const prev = engineRef.current
       prev?.dispose()
       const { w, h } = worldSize()
-      const spawn = inject && inject.length > 0 ? 48 : nextCount
+      const cap = clampParticleCap(visualRef.current.particleCap)
+      const spawn = inject && inject.length > 0 ? Math.min(48, cap) : Math.min(nextCount, cap)
       const engine = new Engine(w, h, spawn, seed)
       engine.setParams(paramsRef.current)
       engine.setMatrix(matrixRef.current)
+      engine.setParticleLimit(cap)
       if (inject && inject.length > 0) engine.injectMinds(inject)
       engineRef.current = engine
       seedRef.current = seed
@@ -564,6 +584,7 @@ export default function App() {
             memoryMb={memoryMb}
             paused={paused}
             presetName={currentPreset}
+            particleCap={visual.particleCap}
             onOpenTutorial={() => setTutorialOpen(true)}
           />
           <Tutorial
@@ -627,9 +648,11 @@ export default function App() {
             }}
             visual={visual}
             onVisual={(v) => {
-              visualRef.current = v
-              setVisual(v)
-              saveVisual(v)
+              const next = { ...v, particleCap: clampParticleCap(v.particleCap) }
+              visualRef.current = next
+              setVisual(next)
+              saveVisual(next)
+              engineRef.current?.setParticleLimit(next.particleCap)
             }}
             presetId={presetId}
             onPreset={applyPreset}

@@ -4,6 +4,23 @@ import { RENDER_STRIDE } from '@/lib/params'
 
 export type RenderFps = 30 | 60 | 120 | 'auto'
 
+/** Soft spawn cap the sim obeys. Allocation stays at the engine hard max (4096). */
+export const PARTICLE_CAP_MIN = 200
+export const PARTICLE_CAP_MAX = 4000
+export const PARTICLE_CAP_PHONE = 1000
+export const PARTICLE_CAP_DESKTOP = 4000
+
+export function clampParticleCap(n: number): number {
+  return Math.round(Math.min(PARTICLE_CAP_MAX, Math.max(PARTICLE_CAP_MIN, n)))
+}
+
+export function defaultParticleCap(): number {
+  if (typeof window === 'undefined') return PARTICLE_CAP_DESKTOP
+  const phone =
+    window.matchMedia('(max-width: 640px)').matches || window.matchMedia('(pointer: coarse)').matches
+  return phone ? PARTICLE_CAP_PHONE : PARTICLE_CAP_DESKTOP
+}
+
 export type VisualSettings = {
   trails: number
   glow: number
@@ -14,6 +31,8 @@ export type VisualSettings = {
   beautyMode: boolean
   /** Render cap only. Simulation stays 60 Hz. Default 60. */
   renderFps: RenderFps
+  /** Runtime spawn cap. Existing agents stay until they die. */
+  particleCap: number
 }
 
 type Burst = { x: number; y: number; hue: number; mag: number; kind: number; age: number; life: number }
