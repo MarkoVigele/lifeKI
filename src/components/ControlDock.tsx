@@ -209,7 +209,7 @@ export function ControlDock({
               <p className="mb-1 hidden text-[10px] leading-snug text-zinc-600 md:block">
                 Nur das Bild. Die Welt läuft fest mit 60 Schritten pro Sekunde — unabhängig vom Display und von Berührung.
               </p>
-              <div className="grid grid-cols-4 gap-0.5 rounded-lg bg-white/6 p-0.5" role="radiogroup" aria-label="Bildrate">
+              <div className="grid grid-cols-2 gap-0.5 rounded-lg bg-white/6 p-0.5" role="radiogroup" aria-label="Bildrate">
                 {RENDER_FPS_OPTIONS.map((opt) => {
                   const active = visual.renderFps === opt.value
                   return (
@@ -221,7 +221,7 @@ export function ControlDock({
                       title={opt.label}
                       onClick={() => onVisual({ ...visual, renderFps: opt.value })}
                       className={cn(
-                        'min-h-8 rounded-md px-0.5 text-[8px] leading-tight md:min-h-7 md:text-[10px]',
+                        'min-h-8 rounded-md px-1 text-[10px] leading-tight md:min-h-7 md:text-[11px]',
                         active ? 'bg-teal-300/18 text-teal-100' : 'text-zinc-500 hover:text-zinc-300',
                       )}
                     >
