@@ -81,10 +81,10 @@ export function GodBar({
     <div
       className={cn(
         'pointer-events-auto absolute z-20 transition-[opacity,transform] duration-300',
-        'inset-x-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))]',
         dockOpen && 'max-md:pointer-events-none max-md:invisible max-md:opacity-0',
-        'md:inset-x-auto md:bottom-5 md:left-1/2 md:w-[min(96vw,920px)] md:-translate-x-1/2',
-        dockOpen && 'md:left-4 md:right-[376px] md:w-auto md:translate-x-0',
+        dockOpen
+          ? 'left-2 right-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] md:left-4 md:right-[376px] md:bottom-5 md:w-auto md:translate-x-0'
+          : 'left-2 right-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] md:left-1/2 md:right-auto md:bottom-5 md:w-[min(96vw,920px)] md:-translate-x-1/2',
       )}
     >
       <div className="panel rounded-2xl px-2 py-1.5 md:rounded-3xl md:px-3 md:py-2.5">

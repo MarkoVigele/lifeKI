@@ -86,9 +86,9 @@ export function ControlDock({
     <aside
       className={cn(
         'pointer-events-auto z-30 flex flex-col transition-transform duration-300',
-        'fixed inset-x-0 bottom-0 max-h-[45svh]',
+        'fixed left-0 right-0 top-auto bottom-0 max-h-[45svh]',
         open ? 'translate-y-0' : 'translate-y-full max-md:pointer-events-none',
-        'md:absolute md:right-0 md:top-0 md:bottom-auto md:inset-x-auto md:max-h-none md:h-full',
+        'md:absolute md:left-auto md:right-0 md:top-0 md:bottom-0 md:max-h-none md:h-full',
         open ? 'md:translate-x-0 md:translate-y-0' : 'md:translate-x-[calc(100%-18px)] md:translate-y-0',
       )}
     >
@@ -116,7 +116,7 @@ export function ControlDock({
             <button
               type="button"
               onClick={onToggle}
-              className="min-h-11 min-w-11 rounded-xl px-3 text-[13px] text-zinc-200 hover:text-zinc-50 md:min-h-0 md:min-w-0 md:px-0 md:text-[11px] md:text-zinc-500 md:hover:text-zinc-200"
+              className="min-h-11 min-w-11 rounded-xl px-3 text-[13px] text-zinc-200 hover:text-zinc-50 md:min-h-8 md:min-w-0 md:px-2 md:text-[11px] md:text-zinc-500 md:hover:text-zinc-200"
             >
               <span className="md:hidden">Fertig</span>
               <span className="hidden md:inline">einklappen</span>
