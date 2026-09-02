@@ -1,6 +1,8 @@
 import { useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-const SNAP = 56
+const SNAP = 40
+const TAP = 8
 
 export type DockStage = 'narrow' | 'wide'
 
@@ -32,6 +34,11 @@ export function SwipeSidebar({
   const finish = () => {
     const moved = dxRef.current
     reset()
+    if (Math.abs(moved) < TAP) {
+      if (stage === 'wide') onCollapse()
+      else onExpand()
+      return
+    }
     if (stage === 'wide') {
       if (moved > SNAP) onCollapse()
     } else if (moved > SNAP) onClose()
@@ -43,6 +50,7 @@ export function SwipeSidebar({
     dxRef.current = 0
     setDragging(true)
     e.currentTarget.setPointerCapture(e.pointerId)
+    e.stopPropagation()
   }
 
   const move = (e: PointerEvent<HTMLDivElement>) => {
@@ -58,19 +66,18 @@ export function SwipeSidebar({
       onCollapse()
       return
     }
-    const next = stage === 'wide' ? Math.max(0, raw) : raw
-    dxRef.current = next
-    setDx(next)
+    dxRef.current = raw
+    setDx(raw)
   }
 
   const closeShift = Math.max(0, dx)
-  const expandPx = stage === 'narrow' ? Math.min(-Math.min(0, dx), 120) : 0
+  const expandPx = stage === 'narrow' ? Math.min(-Math.min(0, dx), 130) : 0
   const width =
     stage === 'wide'
-      ? 'min(288px, 80vw)'
+      ? 'min(300px, 82vw)'
       : expandPx > 0
-        ? `min(288px, calc(48vw + ${expandPx}px))`
-        : 'min(176px, 48vw)'
+        ? `min(300px, calc(44vw + ${expandPx}px))`
+        : 'min(168px, 44vw)'
 
   return (
     <div
@@ -82,17 +89,20 @@ export function SwipeSidebar({
       }}
     >
       <div
-        className="absolute inset-y-0 left-0 z-20 flex w-7 touch-none items-center justify-center"
+        className="absolute inset-y-0 left-0 z-20 flex w-11 touch-none flex-col items-center justify-center"
         onPointerDown={down}
         onPointerMove={move}
         onPointerUp={finish}
         onPointerCancel={finish}
         role="separator"
-        aria-label="Zur Seite wischen"
+        aria-label={stage === 'wide' ? 'Schmaler wischen' : 'Breiter wischen'}
       >
-        <span className="h-11 w-1 rounded-full bg-white/30" />
+        <span className="h-10 w-1 rounded-full bg-white/40" />
+        <span className="mt-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/45 text-zinc-200">
+          {stage === 'wide' ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
+        </span>
       </div>
-      <div className="flex h-full min-h-0 w-full flex-col">{children}</div>
+      <div className="flex h-full min-h-0 w-full flex-col pl-6">{children}</div>
     </div>
   )
 }
