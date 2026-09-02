@@ -23,6 +23,12 @@ export function SwipeSidebar({
   const dxRef = useRef(0)
   const stageRef = useRef(stage)
   const onStageRef = useRef(onStage)
+  const listeners = useRef<{
+    move: (e: PointerEvent) => void
+    up: () => void
+    touchMove: (e: TouchEvent) => void
+    touchEnd: () => void
+  } | null>(null)
   const [dx, setDx] = useState(0)
   const [dragging, setDragging] = useState(false)
   const [vw, setVw] = useState(() => (typeof window === 'undefined' ? 390 : window.innerWidth))
@@ -32,45 +38,72 @@ export function SwipeSidebar({
   useEffect(() => {
     const onResize = () => setVw(window.innerWidth)
     window.addEventListener('resize', onResize)
-    return () => window.removeEventListener('resize', onResize)
+    return () => {
+      window.removeEventListener('resize', onResize)
+      detach()
+    }
   }, [])
 
+  const detach = () => {
+    const L = listeners.current
+    if (!L) return
+    window.removeEventListener('pointermove', L.move)
+    window.removeEventListener('pointerup', L.up)
+    window.removeEventListener('touchmove', L.touchMove)
+    window.removeEventListener('touchend', L.touchEnd)
+    listeners.current = null
+  }
+
   const finish = () => {
-    if (startX.current == null) return
+    if (startX.current == null) {
+      detach()
+      return
+    }
     const movedX = dxRef.current
     const next = snapSheetStage(stageRef.current, movedX)
     startX.current = null
     dxRef.current = 0
+    detach()
     setDragging(false)
     setDx(0)
     if (next !== stageRef.current) onStageRef.current(next)
   }
 
-  useEffect(() => {
-    if (!dragging) return
-    const move = (e: PointerEvent) => {
-      if (startX.current == null) return
-      const rawX = e.clientX - startX.current
-      dxRef.current = rawX
-      setDx(rawX)
-    }
+  const track = (clientX: number) => {
+    if (startX.current == null) return
+    const rawX = clientX - startX.current
+    dxRef.current = rawX
+    setDx(rawX)
+  }
+
+  const attach = () => {
+    detach()
+    const move = (e: PointerEvent) => track(e.clientX)
     const up = () => finish()
+    const touchMove = (e: TouchEvent) => {
+      if (!e.touches[0]) return
+      e.preventDefault()
+      track(e.touches[0].clientX)
+    }
+    const touchEnd = () => finish()
+    listeners.current = { move, up, touchMove, touchEnd }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
-    window.addEventListener('pointercancel', up)
-    return () => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', up)
-      window.removeEventListener('pointercancel', up)
-    }
-  }, [dragging])
+    window.addEventListener('touchmove', touchMove, { passive: false })
+    window.addEventListener('touchend', touchEnd)
+  }
 
   const down = (e: ReactPointerEvent<HTMLDivElement>) => {
     startX.current = e.clientX
     dxRef.current = 0
     setDx(0)
     setDragging(true)
-    e.currentTarget.setPointerCapture(e.pointerId)
+    attach()
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId)
+    } catch {
+      /* some WebViews refuse capture; window listeners still run */
+    }
     e.preventDefault()
     e.stopPropagation()
   }
