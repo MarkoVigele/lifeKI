@@ -107,7 +107,7 @@ export function ControlDock({
                   aria-selected={active}
                   onClick={() => onComplexity(MODE_LEVELS[i])}
                   className={cn(
-                    'min-h-8 rounded-md px-0.5 text-[10px] leading-tight tracking-wide md:min-h-7 md:text-[11px]',
+                    'min-h-8 rounded-md px-0 text-[8px] leading-tight tracking-wide md:min-h-7 md:px-0.5 md:text-[11px]',
                     active ? 'bg-teal-300/18 text-teal-100' : 'text-zinc-500 hover:text-zinc-300',
                   )}
                 >
