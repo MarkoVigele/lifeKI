@@ -13,7 +13,7 @@ export type SheetMetrics = {
 export function sheetMetrics(viewportWidth: number): SheetMetrics {
   const vw = Math.max(1, viewportWidth)
   return {
-    peek: 28,
+    peek: 44,
     mid: Math.min(168, Math.round(vw * 0.44)),
     high: Math.min(300, Math.round(vw * 0.82)),
   }

@@ -297,7 +297,13 @@ export default function App() {
           return !p
         })
       }
-      if (e.key === 'd' || e.key === 'D') setDockStage((s) => (s === 'closed' ? 'mid' : 'closed'))
+      if (e.key === 'd' || e.key === 'D') {
+        if (window.matchMedia('(min-width: 768px)').matches) {
+          setDockStage((s) => (s === 'closed' ? 'mid' : 'closed'))
+        } else {
+          setDockStage('closed')
+        }
+      }
       if (e.key === 't' || e.key === 'T') setTutorialOpen((v) => !v)
       if (e.key === 'f' || e.key === 'F') {
         setVisual((v) => {

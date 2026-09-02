@@ -37,7 +37,7 @@ describe('sheet reveal', () => {
   const m = sheetMetrics(390)
 
   it('uses peek / ~44vw / ~82vw on a phone', () => {
-    assert.equal(m.peek, 28)
+    assert.equal(m.peek, 44)
     assert.equal(m.mid, Math.min(168, Math.round(390 * 0.44)))
     assert.equal(m.high, Math.min(300, Math.round(390 * 0.82)))
     assert.ok(m.mid < m.high)

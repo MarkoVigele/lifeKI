@@ -19,16 +19,8 @@ export function SwipeSidebar({
   onStage: (stage: DockStage) => void
   children: ReactNode
 }) {
-  const startX = useRef<number | null>(null)
-  const dxRef = useRef(0)
   const stageRef = useRef(stage)
   const onStageRef = useRef(onStage)
-  const listeners = useRef<{
-    move: (e: PointerEvent) => void
-    up: () => void
-    touchMove: (e: TouchEvent) => void
-    touchEnd: () => void
-  } | null>(null)
   const [dx, setDx] = useState(0)
   const [dragging, setDragging] = useState(false)
   const [vw, setVw] = useState(() => (typeof window === 'undefined' ? 390 : window.innerWidth))
@@ -38,74 +30,39 @@ export function SwipeSidebar({
   useEffect(() => {
     const onResize = () => setVw(window.innerWidth)
     window.addEventListener('resize', onResize)
-    return () => {
-      window.removeEventListener('resize', onResize)
-      detach()
-    }
+    return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  const detach = () => {
-    const L = listeners.current
-    if (!L) return
-    window.removeEventListener('pointermove', L.move)
-    window.removeEventListener('pointerup', L.up)
-    window.removeEventListener('touchmove', L.touchMove)
-    window.removeEventListener('touchend', L.touchEnd)
-    listeners.current = null
-  }
-
-  const finish = () => {
-    if (startX.current == null) {
-      detach()
-      return
-    }
-    const movedX = dxRef.current
-    const next = snapSheetStage(stageRef.current, movedX)
-    startX.current = null
-    dxRef.current = 0
-    detach()
-    setDragging(false)
-    setDx(0)
-    if (next !== stageRef.current) onStageRef.current(next)
-  }
-
-  const track = (clientX: number) => {
-    if (startX.current == null) return
-    const rawX = clientX - startX.current
-    dxRef.current = rawX
-    setDx(rawX)
-  }
-
-  const attach = () => {
-    detach()
-    const move = (e: PointerEvent) => track(e.clientX)
-    const up = () => finish()
-    const touchMove = (e: TouchEvent) => {
-      if (!e.touches[0]) return
-      e.preventDefault()
-      track(e.touches[0].clientX)
-    }
-    const touchEnd = () => finish()
-    listeners.current = { move, up, touchMove, touchEnd }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', up)
-    window.addEventListener('touchmove', touchMove, { passive: false })
-    window.addEventListener('touchend', touchEnd)
-  }
-
-  const down = (e: ReactPointerEvent<HTMLDivElement>) => {
-    startX.current = e.clientX
-    dxRef.current = 0
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    event.stopPropagation()
+    const startX = event.clientX
+    let offset = 0
     setDx(0)
     setDragging(true)
-    attach()
     try {
-      e.currentTarget.setPointerCapture(e.pointerId)
+      event.currentTarget.setPointerCapture(event.pointerId)
     } catch {
-      /* some WebViews refuse capture; window listeners still run */
+      /* capture optional; window listeners still run */
     }
-    e.preventDefault()
-    e.stopPropagation()
+
+    const onMove = (moveEvent: PointerEvent) => {
+      offset = moveEvent.clientX - startX
+      setDx(offset)
+    }
+
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', onUp)
+      window.removeEventListener('pointercancel', onUp)
+      setDragging(false)
+      setDx(0)
+      const next = snapSheetStage(stageRef.current, offset)
+      if (next !== stageRef.current) onStageRef.current(next)
+    }
+
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', onUp)
+    window.addEventListener('pointercancel', onUp)
   }
 
   const m = sheetMetrics(vw)
@@ -123,9 +80,9 @@ export function SwipeSidebar({
       }}
     >
       <div
-        className="absolute inset-y-0 left-0 z-20 flex w-10 flex-col items-center justify-center"
+        className="absolute inset-y-0 left-0 z-20 flex w-11 flex-col items-center justify-center"
         style={{ touchAction: 'none' }}
-        onPointerDown={down}
+        onPointerDown={onPointerDown}
         role="separator"
         aria-label={
           stage === 'high'
@@ -135,15 +92,23 @@ export function SwipeSidebar({
               : 'Nach links wischen für Gesetze'
         }
       >
-        <span className="h-10 w-1 rounded-full bg-white/40" />
-        {stage === 'closed' ? (
-          <span className="mt-2 text-teal-100/80">
-            <SlidersHorizontal size={16} />
-          </span>
-        ) : null}
+        <span
+          className={
+            open
+              ? 'flex h-16 w-8 flex-col items-center justify-center'
+              : 'flex h-16 w-11 flex-col items-center justify-center rounded-l-xl border border-r-0 border-white/10 bg-black/55'
+          }
+        >
+          <span className="h-10 w-1 rounded-full bg-white/40" />
+          {open ? null : (
+            <span className="mt-1.5 text-teal-100/80">
+              <SlidersHorizontal size={16} />
+            </span>
+          )}
+        </span>
       </div>
       <div
-        className="flex h-full min-h-0 w-full min-w-0 flex-col pl-5"
+        className="flex h-full min-h-0 w-full min-w-0 flex-col pl-6"
         aria-hidden={!open}
         style={{ pointerEvents: open ? 'auto' : 'none' }}
       >

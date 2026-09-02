@@ -164,7 +164,7 @@ export function GodBar({
           aria-pressed={dockOpen}
           onClick={onToggleDock}
           className={cn(
-            'ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+            'ml-auto hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl md:flex',
             dockOpen ? 'bg-teal-300/18 text-teal-100' : 'text-zinc-300 hover:bg-white/8',
           )}
         >

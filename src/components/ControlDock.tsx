@@ -70,7 +70,6 @@ export function ControlDock({
 }: Props) {
   const [openId, setOpenId] = useState('')
   const open = stage !== 'closed'
-  const onToggle = () => onStage(open ? 'closed' : 'mid')
   const mode = modeFromComplexity(complexity)
   const full = complexity >= MAX_COMPLEXITY
   const allowedSliders = COMPLEXITY_SLIDERS[complexity] ?? []
@@ -90,7 +89,7 @@ export function ControlDock({
             <div className="text-[13px] tracking-[0.14em] text-zinc-200 uppercase">Gesetze</div>
             <button
               type="button"
-              onClick={onToggle}
+              onClick={() => onStage('closed')}
               className="min-h-9 min-w-9 rounded-lg px-2 text-[12px] text-zinc-200 hover:text-zinc-50 md:min-h-7 md:min-w-0 md:text-[11px] md:text-zinc-500 md:hover:text-zinc-200"
             >
               <span className="md:hidden">Fertig</span>
