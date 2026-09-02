@@ -83,7 +83,7 @@ export function GodBar({
         'pointer-events-auto absolute z-20 transition-[opacity,transform] duration-300',
         dockOpen && 'max-md:pointer-events-none max-md:invisible max-md:opacity-0',
         dockOpen
-          ? 'left-2 right-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] md:left-4 md:right-[376px] md:bottom-5 md:w-auto md:translate-x-0'
+          ? 'left-2 right-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] md:left-4 md:right-[400px] md:bottom-5 md:w-auto md:max-w-[calc(100%-400px)] md:translate-x-0'
           : 'left-2 right-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] md:left-1/2 md:right-auto md:bottom-5 md:w-[min(96vw,920px)] md:-translate-x-1/2',
       )}
     >

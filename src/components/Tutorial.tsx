@@ -23,7 +23,7 @@ export function Tutorial({ open, step, complexity, dockOpen = false, onStep, onC
         'pointer-events-auto absolute z-40 overflow-y-auto scroll-thin',
         'top-[max(7.25rem,calc(env(safe-area-inset-top)+6.25rem))] left-3 w-[min(72vw,280px)] max-h-[min(42svh,340px)]',
         'md:top-[188px] md:right-3 md:left-auto md:w-[min(94vw,400px)] md:max-h-[min(62vh,620px)]',
-        dockOpen && 'md:right-[384px]',
+        dockOpen && 'md:right-[400px]',
       )}
     >
       <div className="panel rounded-2xl p-3 md:rounded-3xl md:p-4">

@@ -86,7 +86,7 @@ export function ControlDock({
     <aside
       className={cn(
         'pointer-events-auto z-30 flex flex-col transition-transform duration-300',
-        'fixed left-0 right-0 top-auto bottom-0 max-h-[45svh]',
+        'fixed left-0 right-0 top-auto bottom-0 h-[45svh] max-h-[45svh] overflow-hidden',
         open ? 'translate-y-0' : 'translate-y-full max-md:pointer-events-none',
         'md:absolute md:left-auto md:right-0 md:top-0 md:bottom-0 md:max-h-none md:h-full',
         open ? 'md:translate-x-0 md:translate-y-0' : 'md:translate-x-[calc(100%-18px)] md:translate-y-0',
