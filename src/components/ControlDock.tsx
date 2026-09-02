@@ -1,7 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { ChevronDown, Download, Star, Trash2, Upload } from 'lucide-react'
 import { SwipeSidebar } from './SwipeSidebar'
-import type { DockStage } from '@/lib/sheetSnap'
 import { SliderField } from './SliderField'
 import { PARAM_GROUPS, type ParamKey } from '@/lib/params'
 import { PRESET_CATEGORIES, PRESETS } from '@/lib/presets'
@@ -20,8 +19,9 @@ const RENDER_FPS_OPTIONS: { value: RenderFps; label: string }[] = [
 type Fossil = { species: number; fitness: number; generation: number; hue: number }
 
 type Props = {
-  stage: DockStage
-  onStage: (stage: DockStage) => void
+  open: boolean
+  onOpen: () => void
+  onClose: () => void
   params: Float32Array
   onParam: (key: ParamKey, value: number) => void
   count: number
@@ -45,8 +45,9 @@ type Props = {
 }
 
 export function ControlDock({
-  stage,
-  onStage,
+  open,
+  onOpen,
+  onClose,
   params,
   onParam,
   count,
@@ -69,7 +70,6 @@ export function ControlDock({
   onComplexity,
 }: Props) {
   const [openId, setOpenId] = useState('')
-  const open = stage !== 'closed'
   const mode = modeFromComplexity(complexity)
   const full = complexity >= MAX_COMPLEXITY
   const allowedSliders = COMPLEXITY_SLIDERS[complexity] ?? []
@@ -89,7 +89,7 @@ export function ControlDock({
             <div className="text-[13px] tracking-[0.14em] text-zinc-200 uppercase">Gesetze</div>
             <button
               type="button"
-              onClick={() => onStage('closed')}
+              onClick={onClose}
               className="min-h-9 min-w-9 rounded-lg px-2 text-[12px] text-zinc-200 hover:text-zinc-50 md:min-h-7 md:min-w-0 md:text-[11px] md:text-zinc-500 md:hover:text-zinc-200"
             >
               <span className="md:hidden">Fertig</span>
@@ -317,13 +317,11 @@ export function ControlDock({
 
   return (
     <>
-      <div className="pointer-events-none absolute top-0 right-0 z-30 h-[calc(100dvh-4.5rem)] min-h-0 pt-[max(0.35rem,env(safe-area-inset-top))] md:hidden">
-        <SwipeSidebar stage={stage} onStage={onStage}>
-          <div className="panel flex h-full min-h-0 w-full flex-col rounded-l-2xl border-y-0 border-r-0">
-            {renderFields()}
-          </div>
-        </SwipeSidebar>
-      </div>
+      <SwipeSidebar open={open} onOpen={onOpen} onClose={onClose}>
+        <div className="panel flex h-full min-h-0 w-full flex-col rounded-l-2xl border-y-0 border-r-0">
+          {renderFields()}
+        </div>
+      </SwipeSidebar>
 
       <aside
         className={cn(

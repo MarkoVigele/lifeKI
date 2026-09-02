@@ -9,7 +9,6 @@ import { defaultParams, DEFAULT_MATRIX, type ParamKey } from '@/lib/params'
 import { PRESETS } from '@/lib/presets'
 import { exportSlot, importSlot, loadSlots, persistSlots, writeAutosave, type SaveSlot } from '@/lib/saves'
 import { COMPLEXITY_TOOLS, FIRST_LIGHT_COUNT, loadGuide, saveGuide } from '@/lib/tutorial'
-import { type DockStage } from '@/lib/sheetSnap'
 import { Renderer, type RenderFps, type VisualSettings } from '@/render/renderer'
 
 const VIS_KEY = 'lifeki.visual.v1'
@@ -92,8 +91,7 @@ export default function App() {
   const [count, setCount] = useState(FIRST_LIGHT_COUNT)
   const [visual, setVisual] = useState<VisualSettings>(() => loadVisual())
   const [presetId, setPresetId] = useState('firstlight')
-  const [dockStage, setDockStage] = useState<DockStage>('closed')
-  const dockOpen = dockStage !== 'closed'
+  const [dockOpen, setDockOpen] = useState(false)
   const [tutorialOpen, setTutorialOpen] = useState(() => !loadGuide().seen)
   const [tutorialStep, setTutorialStep] = useState(0)
   const [complexity, setComplexity] = useState(() => loadGuide().complexity)
@@ -113,7 +111,7 @@ export default function App() {
 
   const dismissOverlays = useCallback(() => {
     const o = overlaysRef.current
-    if (o.dock) setDockStage('closed')
+    if (o.dock) setDockOpen(false)
     if (o.tutorial) {
       setTutorialOpen(false)
       saveGuide(true, complexityRef.current)
@@ -299,9 +297,9 @@ export default function App() {
       }
       if (e.key === 'd' || e.key === 'D') {
         if (window.matchMedia('(min-width: 768px)').matches) {
-          setDockStage((s) => (s === 'closed' ? 'mid' : 'closed'))
+          setDockOpen((v) => !v)
         } else {
-          setDockStage('closed')
+          setDockOpen(false)
         }
       }
       if (e.key === 't' || e.key === 'T') setTutorialOpen((v) => !v)
@@ -614,11 +612,12 @@ export default function App() {
             }}
             allowed={COMPLEXITY_TOOLS[complexity]}
             dockOpen={dockOpen}
-            onToggleDock={() => setDockStage((s) => (s === 'closed' ? 'mid' : 'closed'))}
+            onToggleDock={() => setDockOpen((v) => !v)}
           />
           <ControlDock
-            stage={dockStage}
-            onStage={setDockStage}
+            open={dockOpen}
+            onOpen={() => setDockOpen(true)}
+            onClose={() => setDockOpen(false)}
             params={params}
             onParam={onParam}
             count={count}
