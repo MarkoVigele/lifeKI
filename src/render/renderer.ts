@@ -112,17 +112,11 @@ export class Renderer {
     ctx.setTransform(1, 0, 0, 1, 0, 0)
     this.frame += 1
     const trail = visual.trails
-    const fade = 0.055 + (1 - trail) ** 1.25 * 0.48
+    const fade = Math.min(0.72, 0.18 + (1 - trail) ** 1.1 * 0.5)
     ctx.fillStyle = `rgba(1,1,3,${fade.toFixed(3)})`
     ctx.fillRect(0, 0, w, h)
-    if (trail < 0.08 && this.frame % 20 === 0) {
-      ctx.fillStyle = 'rgba(1,1,3,0.45)'
-      ctx.fillRect(0, 0, w, h)
-    }
-
-    if (visual.biomes && !packed && this.frame % 10 === 0) {
-      const night = 0.5 - 0.5 * Math.cos(day * Math.PI * 2)
-      ctx.fillStyle = `rgba(0,0,0,${(0.03 + night * 0.04).toFixed(3)})`
+    if (trail < 0.12 && this.frame % 8 === 0) {
+      ctx.fillStyle = 'rgba(1,1,3,0.55)'
       ctx.fillRect(0, 0, w, h)
     }
 

@@ -175,10 +175,20 @@ export default function App() {
   }, [worldSize])
 
   useEffect(() => {
+    const FRAME_MS = 1000 / 60
     let frames = 0
     let last = performance.now()
+    let acc = 0
+    let fpsAt = last
     let hud = 0
     const tick = (now: number) => {
+      rafRef.current = requestAnimationFrame(tick)
+      const raw = Math.min(50, now - last)
+      last = now
+      acc += raw
+      if (acc < FRAME_MS) return
+      acc = Math.min(acc, FRAME_MS * 2)
+      acc -= FRAME_MS
       const engine = engineRef.current
       const renderer = rendererRef.current
       if (engine && renderer) {
@@ -201,10 +211,10 @@ export default function App() {
         renderer.draw(engine, visualRef.current, engine.stats().day, engine.sim.width() || w, engine.sim.height() || h)
         placeBrushCursor()
         frames += 1
-        if (now - last >= 500) {
-          setFps(Math.round((frames * 1000) / (now - last)))
+        if (now - fpsAt >= 500) {
+          setFps(Math.min(60, Math.round((frames * 1000) / (now - fpsAt))))
           frames = 0
-          last = now
+          fpsAt = now
         }
         if (now - hud > 180) {
           hud = now
@@ -217,7 +227,6 @@ export default function App() {
           }
         }
       }
-      rafRef.current = requestAnimationFrame(tick)
     }
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
