@@ -49,9 +49,46 @@ jobs:
           npm run build
 
       - name: Deploy preview
-        uses: rossjrw/pr-preview-action@v1
+        if: github.event.action != 'closed'
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          source-dir: dist
-          preview-branch: gh-pages
-          umbrella-dir: pr
-          comment: true
+          branch: gh-pages
+          folder: dist
+          target-folder: pr/${{ github.event.number }}
+          clean: true
+          force: false
+
+      - name: Preview-Kommentar
+        if: github.event.action != 'closed'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: lifeKI-pr-preview
+          message: |
+            Preview: https://markovigele.github.io/lifeKI/pr/${{ github.event.number }}/
+
+      - name: Remove preview
+        if: github.event.action == 'closed'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git clone --depth 1 --branch gh-pages "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" gh-pages-preview
+          rm -rf "gh-pages-preview/pr/${{ github.event.number }}"
+          cd gh-pages-preview
+          git add -A
+          if git diff --cached --quiet; then
+            echo "nothing to remove"
+            exit 0
+          fi
+          git commit -m "Remove preview for PR ${{ github.event.number }}"
+          git push
+
+      - name: Preview-Kommentar schließen
+        if: github.event.action == 'closed'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: lifeKI-pr-preview
+          message: |
+            Preview entfernt.

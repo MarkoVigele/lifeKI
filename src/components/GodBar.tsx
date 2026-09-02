@@ -6,7 +6,7 @@ import {
   Magnet,
   Pause,
   Play,
-  Scale,
+  SlidersHorizontal,
   Sparkles,
   Spline,
   SunMedium,
@@ -56,6 +56,8 @@ type Props = {
   onEmotion: (e: number) => void
   brush: number
   onBrush: (n: number) => void
+  strength: number
+  onStrength: (n: number) => void
   allowed: readonly ToolId[]
   dockOpen: boolean
   onToggleDock: () => void
@@ -72,6 +74,8 @@ export function GodBar({
   onEmotion,
   brush,
   onBrush,
+  strength,
+  onStrength,
   allowed,
   dockOpen,
   onToggleDock,
@@ -86,7 +90,7 @@ export function GodBar({
       )}
       style={{ paddingBottom: 'max(0.4rem, env(safe-area-inset-bottom))' }}
     >
-      <div className="panel flex h-11 items-center gap-1 overflow-x-auto scroll-thin rounded-2xl px-1.5 md:h-11">
+      <div className="panel flex h-11 flex-nowrap items-center gap-1 overflow-x-auto scroll-thin rounded-2xl px-1.5 md:h-11">
         <button
           type="button"
           onClick={onPause}
@@ -114,16 +118,29 @@ export function GodBar({
             </button>
           )
         })}
-        <label className="ml-1 flex min-w-[5.5rem] flex-1 items-center gap-2 pr-1 text-[10px] tracking-wide text-zinc-500 uppercase">
+        <label className="ml-1 flex min-w-[4.75rem] shrink-0 items-center gap-1.5 pr-0.5 text-[10px] tracking-wide text-zinc-500 uppercase">
           <span className="hidden sm:inline">Radius</span>
           <input
-            className="anima-slider h-11"
+            className="anima-slider h-11 w-[4.5rem]"
             type="range"
             min={18}
             max={160}
             value={brush}
             aria-label="Pinselradius"
             onChange={(e) => onBrush(Number(e.target.value))}
+          />
+        </label>
+        <label className="flex min-w-[4.75rem] shrink-0 items-center gap-1.5 pr-1 text-[10px] tracking-wide text-zinc-500 uppercase">
+          <span className="hidden sm:inline">Stärke</span>
+          <input
+            className="anima-slider h-11 w-[4.5rem]"
+            type="range"
+            min={0.25}
+            max={3}
+            step={0.05}
+            value={strength}
+            aria-label="Pinselstärke"
+            onChange={(e) => onStrength(Number(e.target.value))}
           />
         </label>
         {tool === 'emotion' ? (
@@ -151,7 +168,7 @@ export function GodBar({
             dockOpen ? 'bg-teal-300/18 text-teal-100' : 'text-zinc-300 hover:bg-white/8',
           )}
         >
-          <Scale size={18} />
+          <SlidersHorizontal size={18} />
         </button>
       </div>
     </nav>

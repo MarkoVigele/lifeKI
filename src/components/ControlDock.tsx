@@ -1,5 +1,6 @@
-import { useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react'
-import { ChevronDown, Download, Star, Trash2, Upload } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { ChevronDown, Download, SlidersHorizontal, Star, Trash2, Upload } from 'lucide-react'
+import { SwipeSidebar } from './SwipeSidebar'
 import { SliderField } from './SliderField'
 import { PARAM_GROUPS, type ParamKey } from '@/lib/params'
 import { PRESET_CATEGORIES, PRESETS } from '@/lib/presets'
@@ -60,8 +61,6 @@ export function ControlDock({
   onComplexity,
 }: Props) {
   const [openId, setOpenId] = useState('guide')
-  const [drag, setDrag] = useState({ x: 0, y: 0 })
-  const startRef = useRef<{ x: number; y: number } | null>(null)
   const full = complexity >= MAX_COMPLEXITY
   const allowedSliders = COMPLEXITY_SLIDERS[complexity] ?? []
   const allowedPresets = COMPLEXITY_PRESETS[complexity] ?? []
@@ -73,77 +72,11 @@ export function ControlDock({
     })).filter((g) => g.sliders.length > 0)
   }, [allowedSliders, full])
   const presets = full ? PRESETS : PRESETS.filter((p) => allowedPresets.includes(p.id))
-
-  const onGrabDown = (e: PointerEvent<HTMLDivElement>) => {
-    startRef.current = { x: e.clientX, y: e.clientY }
-    e.currentTarget.setPointerCapture(e.pointerId)
-  }
-  const onGrabMove = (e: PointerEvent<HTMLDivElement>) => {
-    if (!startRef.current) return
-    const dx = e.clientX - startRef.current.x
-    const dy = e.clientY - startRef.current.y
-    setDrag({
-      x: open ? Math.max(0, dx) : Math.min(0, dx),
-      y: open ? Math.max(0, dy) : Math.min(0, dy),
-    })
-  }
-  const onGrabUp = (e: PointerEvent<HTMLDivElement>) => {
-    if (!startRef.current) return
-    const dx = e.clientX - startRef.current.x
-    const dy = e.clientY - startRef.current.y
-    startRef.current = null
-    setDrag({ x: 0, y: 0 })
-    const narrow = window.matchMedia('(max-width: 767.98px)').matches
-    if (narrow) {
-      if (open && dy > 48) onToggle()
-      else if (!open && (dy < -48 || (Math.abs(dy) < 12 && Math.abs(dx) < 12))) onToggle()
-    } else if (open && dx > 64) {
-      onToggle()
-    }
-  }
-  const grab = { onPointerDown: onGrabDown, onPointerMove: onGrabMove, onPointerUp: onGrabUp }
-
-  const sheetShift =
-    drag.y !== 0 || drag.x !== 0
-      ? `translate3d(${drag.x}px, ${drag.y}px, 0)`
-      : undefined
-
-  return (
+  const Fields = () => (
     <>
-      {!open ? (
-        <div
-          className="pointer-events-auto fixed inset-x-0 z-30 flex cursor-grab justify-center pt-1 md:hidden"
-          style={{ bottom: 'var(--dock-space)' }}
-          {...grab}
-        >
-          <span className="h-1.5 w-10 rounded-full bg-white/35" aria-hidden />
-        </div>
-      ) : null}
-    <aside
-      className={cn(
-        'pointer-events-auto z-30 flex flex-col',
-        'fixed left-0 right-0 top-auto bottom-[var(--dock-space)] max-h-[min(42svh,42dvh)] overflow-hidden',
-        !sheetShift && 'transition-transform duration-300',
-        open ? 'translate-y-0' : 'translate-y-[calc(100%+1.25rem)] max-md:pointer-events-none',
-        'md:absolute md:left-auto md:right-0 md:top-0 md:bottom-0 md:max-h-none md:h-full',
-        open ? 'md:translate-x-0 md:translate-y-0' : 'md:translate-x-full md:translate-y-0',
-      )}
-      style={sheetShift ? { transform: sheetShift } : undefined}
-    >
-      <div className="panel relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border-x-0 border-b-0 md:w-[360px] md:rounded-none md:rounded-l-3xl md:border-x md:border-y-0 md:border-r-0">
-        <div
-          className="absolute inset-y-0 left-0 z-20 hidden w-3 cursor-ew-resize touch-none md:block"
-          {...grab}
-        />
-        <div className="sticky top-0 z-10 shrink-0 border-b border-white/6 bg-[rgba(8,9,14,0.92)] px-4 pt-1 pb-3 md:static md:bg-transparent md:pt-4 md:pb-4">
-          <div
-            className="flex cursor-grab justify-center py-1.5 touch-none md:hidden"
-            {...grab}
-          >
-            <span className="h-1.5 w-10 rounded-full bg-white/35" aria-hidden />
-          </div>
+        <div className="sticky top-0 z-10 shrink-0 border-b border-white/6 bg-[rgba(8,9,14,0.92)] px-4 py-3 md:static md:bg-transparent md:py-4">
           <div className="flex items-start justify-between gap-3">
-            <div className="font-serif text-xl italic">Instrumente</div>
+            <div className="font-serif text-xl italic">Gesetze</div>
             <button
               type="button"
               onClick={onToggle}
@@ -338,8 +271,45 @@ export function ControlDock({
           </>
           ) : null}
         </div>
-      </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      {!open ? (
+        <button
+          type="button"
+          title="Gesetze"
+          aria-label="Gesetze"
+          className="pointer-events-auto absolute top-[38%] right-0 z-30 flex h-16 w-7 items-center justify-center rounded-l-xl border border-r-0 border-white/10 bg-black/55 text-teal-100/80 md:hidden"
+          onClick={onToggle}
+        >
+          <SlidersHorizontal size={16} />
+        </button>
+      ) : null}
+
+      {open ? (
+        <div className="pointer-events-none absolute top-0 right-0 z-30 h-[calc(100dvh-4.5rem)] w-[min(240px,62%)] pt-[max(0.35rem,env(safe-area-inset-top))] md:hidden">
+          <div className="pointer-events-auto h-full">
+            <SwipeSidebar onClose={onToggle}>
+              <div className="panel flex h-full min-h-0 w-full flex-col overflow-hidden rounded-l-2xl border-y-0 border-r-0">
+                <Fields />
+              </div>
+            </SwipeSidebar>
+          </div>
+        </div>
+      ) : null}
+
+      <aside
+        className={cn(
+          'pointer-events-auto absolute top-0 right-0 z-30 hidden h-full w-[360px] flex-col transition-transform duration-300 md:flex',
+          open ? 'translate-x-0' : 'translate-x-full',
+        )}
+      >
+        <div className="panel flex h-full min-h-0 w-full flex-col overflow-hidden rounded-none rounded-l-3xl border-y-0 border-r-0">
+          <Fields />
+        </div>
+      </aside>
     </>
   )
 }

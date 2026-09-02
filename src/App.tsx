@@ -75,6 +75,7 @@ export default function App() {
   const [tool, setTool] = useState<ToolId>('attract')
   const [emotion, setEmotion] = useState(0)
   const [brush, setBrush] = useState(72)
+  const [strength, setStrength] = useState(1.35)
   const [params, setParams] = useState(() => defaultParams())
   const [count, setCount] = useState(FIRST_LIGHT_COUNT)
   const [visual, setVisual] = useState<VisualSettings>(() => loadVisual())
@@ -334,6 +335,13 @@ export default function App() {
     ptr.visible = ev.type !== 'pointerleave' && ev.type !== 'pointercancel'
     placeBrushCursor()
     if (ev.type === 'pointerdown') {
+      const mobile = window.matchMedia('(max-width: 767px)').matches
+      const o = overlaysRef.current
+      if (mobile && (o.dock || o.tutorial || o.inspector)) {
+        ev.preventDefault()
+        dismissOverlays()
+        return
+      }
       ptr.down = true
       ptr.dragged = false
       ptr.startX = pos.x
@@ -346,12 +354,7 @@ export default function App() {
         if (!isContinuous(toolRef.current)) applyHeldTool(pos.x, pos.y)
       }
     } else if (ev.type === 'pointerup' || ev.type === 'pointercancel') {
-      const o = overlaysRef.current
-      const overlayOpen = o.dock || o.tutorial || o.inspector
-      const painting = ptr.dragged && isContinuous(toolRef.current)
-      if (ptr.down && overlayOpen && !painting) {
-        dismissOverlays()
-      } else if (ptr.down && !ptr.dragged) {
+      if (ptr.down && !ptr.dragged) {
         if (toolRef.current === 'observe') inspectAt(pos.x, pos.y)
         else applyHeldTool(pos.x, pos.y)
       }
@@ -567,6 +570,11 @@ export default function App() {
             onBrush={(n) => {
               brushRef.current = n
               setBrush(n)
+            }}
+            strength={strength}
+            onStrength={(n) => {
+              strengthRef.current = n
+              setStrength(n)
             }}
             allowed={COMPLEXITY_TOOLS[complexity]}
             dockOpen={dockOpen}
