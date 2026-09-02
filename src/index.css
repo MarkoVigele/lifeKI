@@ -70,10 +70,36 @@ select {
   background: #f4f1ea;
 }
 
+@media (max-width: 767px) {
+  .anima-slider {
+    height: 28px;
+  }
+
+  .anima-slider::-webkit-slider-thumb {
+    width: 20px;
+    height: 20px;
+    margin-top: -8.5px;
+  }
+
+  .anima-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
+}
+
 .panel {
   background: rgba(8, 9, 14, 0.72);
   backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dock-scroll {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 .scroll-thin {

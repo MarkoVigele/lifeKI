@@ -2,6 +2,25 @@ import type { Engine } from '@/lib/engine'
 import { hsvCss, hsvToRgb } from '@/lib/utils'
 import { RENDER_STRIDE } from '@/lib/params'
 
+export type RenderFps = 30 | 60 | 120 | 'auto'
+
+/** Soft spawn cap the sim obeys. Allocation stays at the engine hard max (4096). */
+export const PARTICLE_CAP_MIN = 200
+export const PARTICLE_CAP_MAX = 4000
+export const PARTICLE_CAP_PHONE = 1000
+export const PARTICLE_CAP_DESKTOP = 4000
+
+export function clampParticleCap(n: number): number {
+  return Math.round(Math.min(PARTICLE_CAP_MAX, Math.max(PARTICLE_CAP_MIN, n)))
+}
+
+export function defaultParticleCap(): number {
+  if (typeof window === 'undefined') return PARTICLE_CAP_DESKTOP
+  const phone =
+    window.matchMedia('(max-width: 640px)').matches || window.matchMedia('(pointer: coarse)').matches
+  return phone ? PARTICLE_CAP_PHONE : PARTICLE_CAP_DESKTOP
+}
+
 export type VisualSettings = {
   trails: number
   glow: number
@@ -10,6 +29,10 @@ export type VisualSettings = {
   signals: boolean
   biomes: boolean
   beautyMode: boolean
+  /** Render cap only. Simulation stays 60 Hz. Default 60. */
+  renderFps: RenderFps
+  /** Runtime spawn cap. Existing agents stay until they die. */
+  particleCap: number
 }
 
 type Burst = { x: number; y: number; hue: number; mag: number; kind: number; age: number; life: number }
@@ -112,17 +135,11 @@ export class Renderer {
     ctx.setTransform(1, 0, 0, 1, 0, 0)
     this.frame += 1
     const trail = visual.trails
-    const fade = 0.055 + (1 - trail) ** 1.25 * 0.48
+    const fade = Math.min(0.72, 0.18 + (1 - trail) ** 1.1 * 0.5)
     ctx.fillStyle = `rgba(1,1,3,${fade.toFixed(3)})`
     ctx.fillRect(0, 0, w, h)
-    if (trail < 0.08 && this.frame % 20 === 0) {
-      ctx.fillStyle = 'rgba(1,1,3,0.45)'
-      ctx.fillRect(0, 0, w, h)
-    }
-
-    if (visual.biomes && !packed && this.frame % 10 === 0) {
-      const night = 0.5 - 0.5 * Math.cos(day * Math.PI * 2)
-      ctx.fillStyle = `rgba(0,0,0,${(0.03 + night * 0.04).toFixed(3)})`
+    if (trail < 0.12 && this.frame % 8 === 0) {
+      ctx.fillStyle = 'rgba(1,1,3,0.55)'
       ctx.fillRect(0, 0, w, h)
     }
 

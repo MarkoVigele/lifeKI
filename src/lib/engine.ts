@@ -87,6 +87,14 @@ export class Engine {
     this.lastStepMs = performance.now() - t0
   }
 
+  setParticleLimit(n: number) {
+    this.sim.set_particle_limit(n)
+  }
+
+  particleLimit(): number {
+    return this.sim.particle_limit()
+  }
+
   setParams(params: Float32Array) {
     this.sim.set_params(params)
   }

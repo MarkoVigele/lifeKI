@@ -9,9 +9,21 @@ import { defaultParams, DEFAULT_MATRIX, type ParamKey } from '@/lib/params'
 import { PRESETS } from '@/lib/presets'
 import { exportSlot, importSlot, loadSlots, persistSlots, writeAutosave, type SaveSlot } from '@/lib/saves'
 import { COMPLEXITY_TOOLS, FIRST_LIGHT_COUNT, loadGuide, saveGuide } from '@/lib/tutorial'
-import { Renderer, type VisualSettings } from '@/render/renderer'
+import {
+  clampParticleCap,
+  defaultParticleCap,
+  PARTICLE_CAP_DESKTOP,
+  Renderer,
+  type RenderFps,
+  type VisualSettings,
+} from '@/render/renderer'
 
 const VIS_KEY = 'lifeki.visual.v1'
+
+/** Simulation clock: constant 60 Hz, independent of display / touch / render cap. */
+const SIM_HZ = 60
+const SIM_MS = 1000 / SIM_HZ
+const MAX_SIM_STEPS = 5
 
 const DEFAULT_VISUAL: VisualSettings = {
   trails: 0.66,
@@ -21,16 +33,33 @@ const DEFAULT_VISUAL: VisualSettings = {
   signals: true,
   biomes: true,
   beautyMode: false,
+  renderFps: 60,
+  particleCap: PARTICLE_CAP_DESKTOP,
+}
+
+function parseRenderFps(value: unknown): RenderFps {
+  if (value === 30 || value === 60 || value === 120 || value === 'auto') return value
+  return 60
+}
+
+function parseParticleCap(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return clampParticleCap(value)
+  return defaultParticleCap()
 }
 
 function loadVisual(): VisualSettings {
   try {
     const raw = localStorage.getItem(VIS_KEY)
-    if (!raw) return { ...DEFAULT_VISUAL }
+    if (!raw) return { ...DEFAULT_VISUAL, particleCap: defaultParticleCap() }
     const data = JSON.parse(raw) as Partial<VisualSettings>
-    return { ...DEFAULT_VISUAL, ...data }
+    return {
+      ...DEFAULT_VISUAL,
+      ...data,
+      renderFps: parseRenderFps(data.renderFps),
+      particleCap: parseParticleCap(data.particleCap),
+    }
   } catch {
-    return { ...DEFAULT_VISUAL }
+    return { ...DEFAULT_VISUAL, particleCap: defaultParticleCap() }
   }
 }
 
@@ -91,6 +120,26 @@ export default function App() {
   const [fossils, setFossils] = useState<{ species: number; fitness: number; generation: number; hue: number }[]>([])
   const [stepMs, setStepMs] = useState(0)
   const [memoryMb, setMemoryMb] = useState(0)
+  const overlaysRef = useRef({ dock: false, tutorial: false, inspector: false })
+  const complexityRef = useRef(complexity)
+  const onPointerRef = useRef<(ev: PointerEvent) => void>(() => {})
+  complexityRef.current = complexity
+
+  overlaysRef.current = { dock: dockOpen, tutorial: tutorialOpen, inspector: inspected != null }
+
+  const dismissOverlays = useCallback(() => {
+    const o = overlaysRef.current
+    if (o.dock) setDockOpen(false)
+    if (o.tutorial) {
+      setTutorialOpen(false)
+      saveGuide(true, complexityRef.current)
+    }
+    if (o.inspector) {
+      selectedRef.current = -1
+      selectedIdRef.current = -1
+      setInspected(null)
+    }
+  }, [])
 
   const worldSize = useCallback(() => {
     return { w: window.innerWidth, h: window.innerHeight }
@@ -101,10 +150,12 @@ export default function App() {
       const prev = engineRef.current
       prev?.dispose()
       const { w, h } = worldSize()
-      const spawn = inject && inject.length > 0 ? 48 : nextCount
+      const cap = clampParticleCap(visualRef.current.particleCap)
+      const spawn = inject && inject.length > 0 ? Math.min(48, cap) : Math.min(nextCount, cap)
       const engine = new Engine(w, h, spawn, seed)
       engine.setParams(paramsRef.current)
       engine.setMatrix(matrixRef.current)
+      engine.setParticleLimit(cap)
       if (inject && inject.length > 0) engine.injectMinds(inject)
       engineRef.current = engine
       seedRef.current = seed
@@ -157,47 +208,75 @@ export default function App() {
   useEffect(() => {
     let frames = 0
     let last = performance.now()
+    let simAcc = 0
+    let renderAcc = 0
+    let fpsAt = last
     let hud = 0
+    const applyIfHeld = () => {
+      const held = pointerRef.current
+      if (held.down && held.dragged && isContinuous(toolRef.current)) {
+        applyHeldTool(held.x, held.y)
+      }
+    }
     const tick = (now: number) => {
+      rafRef.current = requestAnimationFrame(tick)
+      const elapsed = Math.min(80, now - last)
+      last = now
       const engine = engineRef.current
       const renderer = rendererRef.current
-      if (engine && renderer) {
-        const { w, h } = worldSize()
-        const held = pointerRef.current
-        if (held.down && held.dragged && isContinuous(toolRef.current)) {
-          applyHeldTool(held.x, held.y)
+      if (!engine || !renderer) return
+
+      if (pausedRef.current) {
+        simAcc += elapsed
+        if (simAcc >= SIM_MS) {
+          applyIfHeld()
+          simAcc = 0
         }
-        if (!pausedRef.current) {
+      } else {
+        simAcc += elapsed
+        let steps = 0
+        while (simAcc >= SIM_MS && steps < MAX_SIM_STEPS) {
+          applyIfHeld()
           engine.setParams(paramsRef.current)
           engine.step()
           renderer.ingestEvents(engine.events())
+          simAcc -= SIM_MS
+          steps++
         }
+      }
+
+      renderAcc += elapsed
+      const cap = visualRef.current.renderFps
+      const renderMs = cap === 'auto' ? 0 : 1000 / cap
+      const shouldDraw = cap === 'auto' || renderAcc >= renderMs
+      if (shouldDraw) {
+        if (renderMs > 0) renderAcc %= renderMs
+        else renderAcc = 0
+        const { w, h } = worldSize()
         if (selectedIdRef.current >= 0) {
-          const idx = engine.findId(selectedIdRef.current)
-          selectedRef.current = idx
+          selectedRef.current = engine.findId(selectedIdRef.current)
         }
         renderer.selected = selectedRef.current
         renderer.observer = toolRef.current === 'observe'
         renderer.draw(engine, visualRef.current, engine.stats().day, engine.sim.width() || w, engine.sim.height() || h)
-        placeBrushCursor()
         frames += 1
-        if (now - last >= 500) {
-          setFps(Math.round((frames * 1000) / (now - last)))
-          frames = 0
-          last = now
-        }
-        if (now - hud > 180) {
-          hud = now
-          setStats(engine.stats())
-          setStepMs(engine.lastStepMs)
-          setMemoryMb(engine.memoryBytes() / 1048576)
-          if (selectedIdRef.current >= 0) {
-            const live = engine.inspectById(selectedIdRef.current)
-            if (live) setInspected(live)
-          }
+      }
+      placeBrushCursor()
+      if (now - fpsAt >= 500) {
+        setFps(Math.round((frames * 1000) / (now - fpsAt)))
+        frames = 0
+        fpsAt = now
+      }
+      if (now - hud > 180) {
+        hud = now
+        setStats(engine.stats())
+        setStepMs(engine.lastStepMs)
+        setMemoryMb(engine.memoryBytes() / 1048576)
+        if (selectedIdRef.current >= 0) {
+          const live = engine.inspectById(selectedIdRef.current)
+          if (live) setInspected(live)
         }
       }
-      rafRef.current = requestAnimationFrame(tick)
     }
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
@@ -236,7 +315,13 @@ export default function App() {
           return !p
         })
       }
-      if (e.key === 'd' || e.key === 'D') setDockOpen((v) => !v)
+      if (e.key === 'd' || e.key === 'D') {
+        if (window.matchMedia('(min-width: 768px)').matches) {
+          setDockOpen((v) => !v)
+        } else {
+          setDockOpen(false)
+        }
+      }
       if (e.key === 't' || e.key === 'T') setTutorialOpen((v) => !v)
       if (e.key === 'f' || e.key === 'F') {
         setVisual((v) => {
@@ -315,6 +400,13 @@ export default function App() {
     ptr.visible = ev.type !== 'pointerleave' && ev.type !== 'pointercancel'
     placeBrushCursor()
     if (ev.type === 'pointerdown') {
+      const mobile = window.matchMedia('(max-width: 767px)').matches
+      const o = overlaysRef.current
+      if (mobile && (o.dock || o.tutorial || o.inspector)) {
+        ev.preventDefault()
+        dismissOverlays()
+        return
+      }
       ptr.down = true
       ptr.dragged = false
       ptr.startX = pos.x
@@ -337,13 +429,14 @@ export default function App() {
       ptr.visible = false
     }
   }
+  onPointerRef.current = onPointer
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const down = (e: PointerEvent) => onPointer(e)
-    const move = (e: PointerEvent) => onPointer(e)
-    const up = (e: PointerEvent) => onPointer(e)
+    const down = (e: PointerEvent) => onPointerRef.current(e)
+    const move = (e: PointerEvent) => onPointerRef.current(e)
+    const up = (e: PointerEvent) => onPointerRef.current(e)
     const wheel = (e: WheelEvent) => {
       e.preventDefault()
       const next = Math.min(160, Math.max(18, brushRef.current + (e.deltaY > 0 ? -8 : 8)))
@@ -491,28 +584,17 @@ export default function App() {
             memoryMb={memoryMb}
             paused={paused}
             presetName={currentPreset}
-            dockOpen={dockOpen}
-            onToggleDock={() => setDockOpen((v) => !v)}
+            particleCap={visual.particleCap}
             onOpenTutorial={() => setTutorialOpen(true)}
-            complexity={complexity}
           />
           <Tutorial
             open={tutorialOpen}
             step={tutorialStep}
-            complexity={complexity}
+            dockOpen={dockOpen}
             onStep={setTutorialStep}
             onClose={() => {
               setTutorialOpen(false)
               saveGuide(true, complexity)
-            }}
-            onComplexity={(n) => {
-              setComplexity(n)
-              saveGuide(true, n)
-              const allowed = COMPLEXITY_TOOLS[n]
-              if (!allowed.includes(toolRef.current)) {
-                toolRef.current = 'observe'
-                setTool('observe')
-              }
             }}
           />
           <Inspector
@@ -550,10 +632,13 @@ export default function App() {
               setStrength(n)
             }}
             allowed={COMPLEXITY_TOOLS[complexity]}
+            dockOpen={dockOpen}
+            onToggleDock={() => setDockOpen((v) => !v)}
           />
           <ControlDock
             open={dockOpen}
-            onToggle={() => setDockOpen((v) => !v)}
+            onOpen={() => setDockOpen(true)}
+            onClose={() => setDockOpen(false)}
             params={params}
             onParam={onParam}
             count={count}
@@ -563,9 +648,11 @@ export default function App() {
             }}
             visual={visual}
             onVisual={(v) => {
-              visualRef.current = v
-              setVisual(v)
-              saveVisual(v)
+              const next = { ...v, particleCap: clampParticleCap(v.particleCap) }
+              visualRef.current = next
+              setVisual(next)
+              saveVisual(next)
+              engineRef.current?.setParticleLimit(next.particleCap)
             }}
             presetId={presetId}
             onPreset={applyPreset}

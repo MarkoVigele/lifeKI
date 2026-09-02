@@ -1,18 +1,32 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { ChevronDown, Download, Star, Trash2, Upload } from 'lucide-react'
+import { SwipeSidebar } from './SwipeSidebar'
 import { SliderField } from './SliderField'
 import { PARAM_GROUPS, type ParamKey } from '@/lib/params'
 import { PRESET_CATEGORIES, PRESETS } from '@/lib/presets'
-import { COMPLEXITY_LABEL, COMPLEXITY_PRESETS, COMPLEXITY_SLIDERS, MAX_COMPLEXITY } from '@/lib/tutorial'
+import { COMPLEXITY_PRESETS, COMPLEXITY_SLIDERS, MAX_COMPLEXITY, MODE_LABELS, MODE_LEVELS, modeFromComplexity } from '@/lib/tutorial'
 import { SLOT_COUNT, type SaveSlot } from '@/lib/saves'
 import { cn } from '@/lib/utils'
-import type { VisualSettings } from '@/render/renderer'
+import {
+  PARTICLE_CAP_MAX,
+  PARTICLE_CAP_MIN,
+  type RenderFps,
+  type VisualSettings,
+} from '@/render/renderer'
+
+const RENDER_FPS_OPTIONS: { value: RenderFps; label: string }[] = [
+  { value: 30, label: '30' },
+  { value: 60, label: '60' },
+  { value: 120, label: '120' },
+  { value: 'auto', label: 'Automatisch' },
+]
 
 type Fossil = { species: number; fitness: number; generation: number; hue: number }
 
 type Props = {
   open: boolean
-  onToggle: () => void
+  onOpen: () => void
+  onClose: () => void
   params: Float32Array
   onParam: (key: ParamKey, value: number) => void
   count: number
@@ -37,7 +51,8 @@ type Props = {
 
 export function ControlDock({
   open,
-  onToggle,
+  onOpen,
+  onClose,
   params,
   onParam,
   count,
@@ -59,7 +74,8 @@ export function ControlDock({
   complexity,
   onComplexity,
 }: Props) {
-  const [openId, setOpenId] = useState('guide')
+  const [openId, setOpenId] = useState('')
+  const mode = modeFromComplexity(complexity)
   const full = complexity >= MAX_COMPLEXITY
   const allowedSliders = COMPLEXITY_SLIDERS[complexity] ?? []
   const allowedPresets = COMPLEXITY_PRESETS[complexity] ?? []
@@ -71,97 +87,82 @@ export function ControlDock({
     })).filter((g) => g.sliders.length > 0)
   }, [allowedSliders, full])
   const presets = full ? PRESETS : PRESETS.filter((p) => allowedPresets.includes(p.id))
-
-  return (
-    <aside
-      className={cn(
-        'pointer-events-auto absolute right-0 top-0 z-30 flex h-full flex-col transition-transform duration-300',
-        open ? 'translate-x-0' : 'translate-x-[calc(100%-18px)]',
-      )}
-    >
-      {open ? (
-        <button
-          type="button"
-          onClick={onToggle}
-          className="absolute top-5 left-0 z-10 -translate-x-full rounded-l-2xl border border-r-0 border-white/10 bg-black/70 px-2 py-3 text-[10px] tracking-[0.18em] text-teal-100 uppercase"
-        >
-          Zu
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={onToggle}
-          className="absolute top-5 left-0 z-10 -translate-x-full rounded-l-2xl border border-r-0 border-teal-300/30 bg-teal-300/15 px-2 py-3 text-[10px] tracking-[0.18em] text-teal-100 uppercase"
-        >
-          Gesetze
-        </button>
-      )}
-      <div className="panel flex h-full w-[min(100vw,360px)] flex-col overflow-hidden rounded-none border-y-0 border-r-0 md:rounded-l-3xl">
-        <div className="border-b border-white/6 px-4 py-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="font-serif text-xl italic">Instrumente</div>
-            <button type="button" onClick={onToggle} className="text-[11px] text-zinc-500 hover:text-zinc-200">
-              einklappen
+  const renderFields = () => (
+    <>
+        <div className="shrink-0 border-b border-white/6 px-2.5 py-2 md:px-3 md:py-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[13px] tracking-[0.14em] text-zinc-200 uppercase">Gesetze</div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="min-h-9 min-w-9 rounded-lg px-2 text-[12px] text-zinc-200 hover:text-zinc-50 md:min-h-7 md:min-w-0 md:text-[11px] md:text-zinc-500 md:hover:text-zinc-200"
+            >
+              <span className="md:hidden">Fertig</span>
+              <span className="hidden md:inline">einklappen</span>
             </button>
           </div>
-          <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
-            Ebene {COMPLEXITY_LABEL[complexity]}. Die Anleitung erklärt jeden Regler, bevor er erscheint.
-          </p>
-          <button
-            type="button"
-            onClick={onNewWorld}
-            className="mt-3 w-full rounded-2xl bg-teal-300/12 px-3 py-2 text-[12px] text-teal-100 hover:bg-teal-300/18"
+          <div
+            className="mt-1.5 grid grid-cols-3 gap-0.5 rounded-lg bg-white/6 p-0.5"
+            role="tablist"
+            aria-label="Modus"
           >
-            Neue Welt aus diesen Gesetzen
-          </button>
-        </div>
-        <div className="scroll-thin flex-1 overflow-y-auto px-3 py-2">
-          <Section id="guide" title="Ebene" openId={openId} setOpenId={setOpenId}>
-            <div className="flex flex-wrap gap-1.5 pb-1">
-              {COMPLEXITY_LABEL.map((label, i) => (
+            {MODE_LABELS.map((label, i) => {
+              const active = mode === i
+              return (
                 <button
                   key={label}
                   type="button"
-                  onClick={() => onComplexity(i)}
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => onComplexity(MODE_LEVELS[i])}
                   className={cn(
-                    'rounded-full px-2.5 py-1 text-[10px]',
-                    complexity === i ? 'bg-teal-300/18 text-teal-100' : 'bg-white/5 text-zinc-500 hover:text-zinc-300',
+                    'min-h-8 rounded-md px-0 text-[8px] leading-tight tracking-wide md:min-h-7 md:px-0.5 md:text-[11px]',
+                    active ? 'bg-teal-300/18 text-teal-100' : 'text-zinc-500 hover:text-zinc-300',
                   )}
                 >
                   {label}
                 </button>
-              ))}
-            </div>
-          </Section>
+              )
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={onNewWorld}
+            className="mt-1.5 min-h-8 w-full rounded-lg bg-teal-300/12 px-2 text-[11px] text-teal-100 hover:bg-teal-300/18 md:min-h-7"
+          >
+            Neue Welt
+          </button>
+        </div>
+        <div className="dock-scroll scroll-thin px-2.5 py-1 md:px-3">
           <Section id="presets" title="Szenen" openId={openId} setOpenId={setOpenId}>
-            <div className="space-y-4">
+            <div className="space-y-2">
               {PRESET_CATEGORIES.map((cat) => {
                 const items = presets.filter((p) => p.category === cat.id)
                 if (items.length === 0) return null
                 return (
                   <div key={cat.id}>
-                    <div className="mb-1.5 px-0.5">
-                      <div className="text-[10px] tracking-[0.18em] text-teal-200/70 uppercase">{cat.title}</div>
-                      <p className="mt-0.5 text-[10px] leading-snug text-zinc-600">{cat.hint}</p>
+                    <div className="mb-1 px-0.5">
+                      <div className="truncate text-[9px] tracking-[0.16em] text-teal-200/70 uppercase">{cat.title}</div>
+                      <p className="mt-0.5 hidden truncate text-[9px] leading-snug text-zinc-600 md:block">{cat.hint}</p>
                     </div>
-                    <div className="grid grid-cols-1 gap-2">
+                    <div className="grid grid-cols-1 gap-1">
                       {items.map((p) => (
                         <button
                           key={p.id}
                           type="button"
                           onClick={() => onPreset(p.id)}
                           className={cn(
-                            'rounded-2xl border px-3 py-2 text-left',
+                            'min-w-0 overflow-hidden rounded-xl border px-2 py-1.5 text-left',
                             presetId === p.id
                               ? 'border-teal-300/30 bg-teal-300/8'
                               : 'border-white/6 bg-white/3 hover:bg-white/6',
                           )}
                         >
-                          <div className="flex items-center justify-between">
-                            <span className="text-[13px] text-zinc-100">{p.name}</span>
-                            <span className="text-[9px] tracking-wider text-zinc-500 uppercase">{p.tag}</span>
+                          <div className="flex min-w-0 items-center justify-between gap-1.5">
+                            <span className="min-w-0 truncate text-[11px] leading-tight text-zinc-100">{p.name}</span>
+                            <span className="shrink-0 text-[8px] tracking-wider text-zinc-500 uppercase">{p.tag}</span>
                           </div>
-                          <p className="mt-1 text-[10px] leading-snug text-zinc-500">{p.blurb}</p>
+                          <p className="mt-0.5 truncate text-[9px] leading-tight text-zinc-500">{p.blurb}</p>
                         </button>
                       ))}
                     </div>
@@ -205,6 +206,43 @@ export function ControlDock({
           ))}
 
           <Section id="vis" title="Visualisierung" openId={openId} setOpenId={setOpenId}>
+            <div className="mb-1.5 py-0.5">
+              <div className="mb-0.5 text-[10px] leading-tight tracking-wide text-zinc-400">Bildrate</div>
+              <p className="mb-1 hidden text-[10px] leading-snug text-zinc-600 md:block">
+                Nur das Bild. Die Welt läuft fest mit 60 Schritten pro Sekunde — unabhängig vom Display und von Berührung.
+              </p>
+              <div className="grid grid-cols-2 gap-0.5 rounded-lg bg-white/6 p-0.5" role="radiogroup" aria-label="Bildrate">
+                {RENDER_FPS_OPTIONS.map((opt) => {
+                  const active = visual.renderFps === opt.value
+                  return (
+                    <button
+                      key={String(opt.value)}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      title={opt.label}
+                      onClick={() => onVisual({ ...visual, renderFps: opt.value })}
+                      className={cn(
+                        'min-h-8 rounded-md px-1 text-[10px] leading-tight md:min-h-7 md:text-[11px]',
+                        active ? 'bg-teal-300/18 text-teal-100' : 'text-zinc-500 hover:text-zinc-300',
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+            <SliderField
+              label="Teilchen-Limit"
+              hint="Keine neuen Geburten über diesem Wert. Wer schon lebt, bleibt, bis es stirbt. Auf dem Handy lieber niedrig halten."
+              value={visual.particleCap}
+              min={PARTICLE_CAP_MIN}
+              max={PARTICLE_CAP_MAX}
+              step={50}
+              format={(v) => v.toFixed(0)}
+              onChange={(v) => onVisual({ ...visual, particleCap: Math.round(v) })}
+            />
             <SliderField
               label="Spuren"
               hint="Kurzer Schweif hinter jedem Licht. Links = fast keins, rechts = länger — sie verblassen immer."
@@ -264,7 +302,7 @@ export function ControlDock({
                   key={`${f.generation}-${i}`}
                   type="button"
                   onClick={() => onRevive(i)}
-                  className="mb-1.5 flex w-full items-center justify-between rounded-xl bg-white/4 px-2.5 py-2 text-left hover:bg-white/8"
+                  className="mb-1.5 flex min-h-11 w-full items-center justify-between rounded-xl bg-white/4 px-2.5 py-2 text-left hover:bg-white/8 md:min-h-0"
                 >
                   <span className="text-[11px] text-zinc-300">
                     Art {Math.round(f.species)} · Gen {Math.round(f.generation)}
@@ -289,8 +327,28 @@ export function ControlDock({
           </>
           ) : null}
         </div>
-      </div>
-    </aside>
+    </>
+  )
+
+  return (
+    <>
+      <SwipeSidebar open={open} onOpen={onOpen} onClose={onClose}>
+        <div className="panel flex h-full min-h-0 w-full flex-col rounded-l-2xl border-y-0 border-r-0">
+          {renderFields()}
+        </div>
+      </SwipeSidebar>
+
+      <aside
+        className={cn(
+          'pointer-events-auto absolute top-0 right-0 z-30 hidden h-full min-h-0 w-[360px] flex-col transition-transform duration-300 md:flex',
+          open ? 'translate-x-0' : 'translate-x-full',
+        )}
+      >
+        <div className="panel flex h-full min-h-0 w-full flex-col rounded-none rounded-l-3xl border-y-0 border-r-0">
+          {renderFields()}
+        </div>
+      </aside>
+    </>
   )
 }
 
@@ -351,23 +409,29 @@ function Section({
 }) {
   const open = openId === id
   return (
-    <div className="border-b border-white/6 py-1">
+    <div className="border-b border-white/6">
       <button
         type="button"
         onClick={() => setOpenId(open ? '' : id)}
-        className="flex w-full items-center justify-between py-2 text-left text-[12px] tracking-wide text-zinc-300"
+        className={cn(
+          'flex min-h-8 w-full items-center justify-between py-1 text-left text-[11px] tracking-wide text-zinc-300 md:min-h-0',
+          open && 'sticky top-0 z-10 bg-[rgba(8,9,14,0.94)] backdrop-blur-md',
+        )}
       >
         {title}
-        <ChevronDown size={14} className={cn('text-zinc-500 transition-transform', open && 'rotate-180')} />
+        <span className="flex shrink-0 items-center gap-1 text-zinc-500">
+          {open ? <span className="text-[10px] tracking-wide text-zinc-300 uppercase">Zu</span> : null}
+          <ChevronDown size={13} className={cn('transition-transform', open && 'rotate-180')} />
+        </span>
       </button>
-      {open ? <div className="pb-3">{children}</div> : null}
+      {open ? <div className="pb-1.5">{children}</div> : null}
     </div>
   )
 }
 
 function Toggle({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex w-full items-center justify-between py-1.5 text-[11px] text-zinc-400">
+    <button type="button" onClick={onClick} className="flex min-h-7 w-full items-center justify-between py-0.5 text-[10px] text-zinc-400 md:min-h-0">
       {label}
       <span className={cn('h-4 w-7 rounded-full', on ? 'bg-teal-300/70' : 'bg-white/10')}>
         <span className={cn('block h-4 w-4 rounded-full bg-white transition-transform', on ? 'translate-x-3' : 'translate-x-0')} />
@@ -402,7 +466,7 @@ function SavePanel({
             <div className="mb-1.5 flex items-center justify-between">
               <span className="font-mono text-[10px] text-zinc-500">Slot {i + 1}</span>
               {s ? (
-                <button type="button" onClick={() => onFavorite(i)} className={s.favorite ? 'text-amber-300' : 'text-zinc-600'}>
+                <button type="button" onClick={() => onFavorite(i)} className={cn('flex min-h-11 min-w-11 items-center justify-center md:min-h-0 md:min-w-0', s.favorite ? 'text-amber-300' : 'text-zinc-600')}>
                   <Star size={12} />
                 </button>
               ) : null}
@@ -416,21 +480,21 @@ function SavePanel({
               }}
             />
             <div className="flex flex-wrap gap-1.5">
-              <button type="button" className="rounded-lg bg-white/8 px-2 py-1 text-[10px]" onClick={() => onSave(i, s?.name || `Welt ${i + 1}`)}>
+              <button type="button" className="min-h-11 rounded-lg bg-white/8 px-3 text-[12px] md:min-h-0 md:px-2 md:py-1 md:text-[10px]" onClick={() => onSave(i, s?.name || `Welt ${i + 1}`)}>
                 Speichern
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-white/8 px-2 py-1 text-[10px] disabled:opacity-30"
+                className="min-h-11 rounded-lg bg-white/8 px-3 text-[12px] disabled:opacity-30 md:min-h-0 md:px-2 md:py-1 md:text-[10px]"
                 disabled={!s}
                 onClick={() => onLoad(i)}
               >
                 Laden
               </button>
-              <button type="button" className="rounded-lg bg-white/8 p-1 text-zinc-400 disabled:opacity-30" disabled={!s} onClick={() => onExport(i)}>
+              <button type="button" className="flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-white/8 text-zinc-400 disabled:opacity-30 md:min-h-0 md:min-w-0 md:p-1" disabled={!s} onClick={() => onExport(i)}>
                 <Download size={12} />
               </button>
-              <button type="button" className="rounded-lg bg-white/8 p-1 text-zinc-400 disabled:opacity-30" disabled={!s} onClick={() => onClear(i)}>
+              <button type="button" className="flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-white/8 text-zinc-400 disabled:opacity-30 md:min-h-0 md:min-w-0 md:p-1" disabled={!s} onClick={() => onClear(i)}>
                 <Trash2 size={12} />
               </button>
             </div>
@@ -440,7 +504,7 @@ function SavePanel({
           </div>
         )
       })}
-      <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-white/10 px-2 py-2 text-[11px] text-zinc-500">
+      <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-white/10 px-2 py-2 text-[11px] text-zinc-500 md:min-h-0">
         <Upload size={12} /> Import JSON
         <input
           type="file"

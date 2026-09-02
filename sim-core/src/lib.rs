@@ -44,6 +44,14 @@ impl Sim {
         self.inner.seed_count(count);
     }
 
+    pub fn set_particle_limit(&mut self, n: u32) {
+        self.inner.set_particle_limit(n);
+    }
+
+    pub fn particle_limit(&self) -> u32 {
+        self.inner.particle_limit()
+    }
+
     pub fn apply_tool(&mut self, tool: u32, x: f32, y: f32, radius: f32, strength: f32, aux: f32) {
         self.inner.apply_tool(tool, x, y, radius, strength, aux);
     }

@@ -1,6 +1,7 @@
+import { ChevronDown } from 'lucide-react'
+import { useState } from 'react'
 import type { EngineStats } from '@/lib/engine'
-import { COMPLEXITY_LABEL, liveCaption } from '@/lib/tutorial'
-import { formatNum } from '@/lib/utils'
+import { cn, formatNum } from '@/lib/utils'
 
 type Props = {
   stats: EngineStats | null
@@ -9,19 +10,8 @@ type Props = {
   memoryMb: number
   paused: boolean
   presetName: string
-  dockOpen: boolean
-  onToggleDock: () => void
+  particleCap: number
   onOpenTutorial: () => void
-  complexity: number
-}
-
-function Cell({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="min-w-0">
-      <div className="text-[9px] uppercase tracking-[0.16em] text-zinc-500">{label}</div>
-      <div className="truncate font-mono text-[12px] tabular-nums text-zinc-200">{value}</div>
-    </div>
-  )
 }
 
 export function Hud({
@@ -31,65 +21,50 @@ export function Hud({
   memoryMb,
   paused,
   presetName,
-  dockOpen,
-  onToggleDock,
+  particleCap,
   onOpenTutorial,
-  complexity,
 }: Props) {
-  const day = stats?.day ?? 0
-  const hour = Math.floor(day * 24)
-  const phase = day < 0.25 ? 'Nacht' : day < 0.5 ? 'Morgengrauen' : day < 0.75 ? 'Tag' : 'Dämmerung'
-  const simple = complexity < 2
+  const [open, setOpen] = useState(false)
+  const shown = Math.max(0, fps)
 
   return (
-    <div className="pointer-events-none absolute left-3 top-3 z-20 w-[min(calc(100vw-1.5rem),320px)]">
-      <div className="mb-2.5 flex items-end justify-between gap-3">
-        <div className="min-w-0">
-          <div className="font-serif text-[26px] italic leading-none tracking-tight text-zinc-100">lifeKI</div>
-          <div className="mt-1 truncate text-[11px] tracking-[0.16em] text-zinc-500 uppercase">
-            {presetName}
-            {paused ? ' · gehalten' : ''}
-          </div>
-        </div>
-        <div className="flex shrink-0 gap-1.5">
-          <button
-            type="button"
-            onClick={onOpenTutorial}
-            className="pointer-events-auto rounded-full border border-teal-300/25 bg-teal-300/10 px-2.5 py-1 text-[10px] tracking-[0.14em] text-teal-100 hover:bg-teal-300/18"
-          >
-            Hilfe
-          </button>
-          <button
-            type="button"
-            onClick={onToggleDock}
-            className="pointer-events-auto rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[10px] tracking-[0.14em] text-teal-200/90 hover:bg-white/8"
-          >
-            {dockOpen ? 'Zu' : 'Gesetze'}
-          </button>
-        </div>
-      </div>
-      <div className="panel pointer-events-auto w-full rounded-2xl px-3.5 py-3">
-        <p className="mb-2.5 h-[3.6rem] overflow-hidden text-[12px] leading-5 text-zinc-300">{liveCaption(stats)}</p>
-        {simple ? (
-          <div className="grid grid-cols-3 gap-x-3 gap-y-2">
-            <Cell label="Leben" value={stats ? String(Math.round(stats.alive)) : '—'} />
-            <Cell label="Ebene" value={COMPLEXITY_LABEL[complexity]} />
-            <Cell label="Zeit" value={phase} />
-          </div>
-        ) : (
-          <div className="grid grid-cols-3 gap-x-3 gap-y-2">
-            <Cell label="Leben" value={stats ? String(Math.round(stats.alive)) : '—'} />
-            <Cell label="Gen." value={stats ? String(Math.round(stats.maxGen)) : '—'} />
-            <Cell label="FPS" value={fps.toFixed(0)} />
-            <Cell label="Träume" value={stats ? String(Math.round(stats.dreams)) : '—'} />
-            <Cell label="Lügen" value={stats ? String(Math.round(stats.lies)) : '—'} />
-            <Cell label="Ideen" value={stats ? String(Math.round(stats.ideas)) : '—'} />
-            <Cell label="Schritt" value={`${formatNum(stepMs, 1)} ms`} />
-            <Cell label="WASM" value={`${formatNum(memoryMb, 1)} MB`} />
-            <Cell label="Zeit" value={`${phase.slice(0, 5)} ${String(hour).padStart(2, '0')}h`} />
-          </div>
-        )}
-      </div>
+    <div className="pointer-events-none absolute left-2 top-[max(0.3rem,env(safe-area-inset-top))] z-20">
+      <button
+        type="button"
+        className="pointer-events-auto flex min-h-8 flex-col items-start justify-center rounded-md px-1.5 py-1 text-left"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-label={open ? 'Übersicht schließen' : 'Übersicht öffnen'}
+      >
+        <span className="inline-flex items-center gap-0.5 font-mono text-[10px] tabular-nums text-white/50">
+          {shown.toFixed(0)} fps
+          <ChevronDown
+            className={cn('size-2.5 text-white/35 transition-transform', open && 'rotate-180')}
+            aria-hidden
+          />
+        </span>
+        {open ? (
+          <span className="mt-1 grid gap-0.5 font-mono text-[10px] leading-snug text-white/48">
+            <span>
+              {stats ? Math.round(stats.alive) : '—'} leben · Limit {Math.round(particleCap)}
+            </span>
+            <span>
+              {formatNum(stepMs, 1)} ms · {formatNum(memoryMb, 1)} MB
+              {paused ? ' · gehalten' : ''}
+            </span>
+            <span className="max-w-[11rem] truncate text-white/32">{presetName}</span>
+          </span>
+        ) : null}
+      </button>
+      {open ? (
+        <button
+          type="button"
+          onClick={onOpenTutorial}
+          className="pointer-events-auto mt-0.5 px-1.5 font-mono text-[10px] tracking-wide text-teal-100/65"
+        >
+          Hilfe
+        </button>
+      ) : null}
     </div>
   )
 }

@@ -66,8 +66,8 @@ export function Inspector({ data, onClose }: Props) {
   if (!data) return null
 
   return (
-    <div className="pointer-events-auto absolute top-[188px] left-3 z-40 w-[min(92vw,340px)] max-h-[min(58vh,560px)] overflow-y-auto scroll-thin md:top-[200px]">
-      <div className="panel rounded-3xl p-3.5">
+    <div className="pointer-events-auto absolute top-[max(2.25rem,calc(env(safe-area-inset-top)+1.75rem))] left-3 z-40 w-[min(68vw,240px)] max-h-[min(32svh,260px)] overflow-y-auto scroll-thin md:top-[52px] md:w-[min(92vw,340px)] md:max-h-[min(58vh,560px)]">
+      <div className="panel rounded-2xl p-3 md:rounded-3xl md:p-3.5">
         <div className="mb-2 flex items-start justify-between gap-3">
           <div>
             <div className="font-serif text-lg italic">Geist #{Math.round(data.id)}</div>
@@ -78,8 +78,12 @@ export function Inspector({ data, onClose }: Props) {
               {data.bond >= 0 ? ' · verbündet' : ''}
             </div>
           </div>
-          <button type="button" onClick={onClose} className="text-[11px] text-zinc-500 hover:text-zinc-200">
-            schließen
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-11 shrink-0 rounded-xl bg-white/8 px-3 text-[12px] text-zinc-200 hover:text-zinc-50 md:min-h-0 md:bg-transparent md:px-0 md:text-[11px] md:text-zinc-500 md:hover:text-zinc-200"
+          >
+            Schließen
           </button>
         </div>
         <div className="mb-3 grid grid-cols-4 gap-2 text-[10px]">

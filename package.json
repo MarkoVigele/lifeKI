@@ -8,6 +8,7 @@
     "wasm": "cargo build --manifest-path sim-core/Cargo.toml --target wasm32-unknown-unknown --release && wasm-bindgen --target web --out-dir src/wasm/pkg sim-core/target/wasm32-unknown-unknown/release/anima_core.wasm",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
+    "test": "node --experimental-strip-types --test src/lib/sheetSnap.test.ts",
     "preview": "vite preview --host 0.0.0.0 --port 45221",
     "start": "node scripts/control.mjs starten",
     "starten": "node scripts/control.mjs starten",
