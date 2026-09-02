@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { HANDLE, nearestStage, peekWidth, wideWidth, widthOf } from './sheetSnap.ts'
+import { HANDLE, nearestStage, peekWidth, releaseStage, wideWidth, widthOf } from './sheetSnap.ts'
 
 describe('lumina widths', () => {
   it('uses 28px closed, ~43vw peek, ~72vw wide on a phone', () => {
@@ -34,5 +34,25 @@ describe('nearestStage', () => {
   it('steps down on drag-right', () => {
     assert.equal(nearestStage(wide - 80, vw), 'peek')
     assert.equal(nearestStage(HANDLE + 10, vw), 'closed')
+  })
+})
+
+describe('releaseStage tap vs drag', () => {
+  const vw = 390
+
+  it('taps from closed or peek go straight to wide', () => {
+    assert.equal(releaseStage('closed', 0, HANDLE, vw), 'wide')
+    assert.equal(releaseStage('closed', 9, HANDLE, vw), 'wide')
+    assert.equal(releaseStage('peek', 3, peekWidth(vw), vw), 'wide')
+  })
+
+  it('a tap while wide stays wide', () => {
+    assert.equal(releaseStage('wide', 2, wideWidth(vw), vw), 'wide')
+  })
+
+  it('a real drag still uses nearestStage', () => {
+    assert.equal(releaseStage('closed', 80, HANDLE + 80, vw), 'peek')
+    assert.equal(releaseStage('peek', 80, peekWidth(vw) + 80, vw), 'wide')
+    assert.equal(releaseStage('wide', 80, wideWidth(vw) - 80, vw), 'peek')
   })
 })

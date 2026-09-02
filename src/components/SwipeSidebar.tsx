@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
-import { HANDLE, nearestStage, wideWidth, widthOf, type DockStage } from '@/lib/sheetSnap'
+import { HANDLE, releaseStage, wideWidth, widthOf, type DockStage } from '@/lib/sheetSnap'
 
 export type { DockStage }
 
@@ -24,6 +24,7 @@ export function SwipeSidebar({
   const liveRef = useRef(HANDLE)
   const moved = useRef(0)
   const draggingRef = useRef(false)
+  const stageRef = useRef<DockStage>('closed')
 
   useEffect(() => {
     const onResize = () => setVw(window.innerWidth)
@@ -75,11 +76,12 @@ export function SwipeSidebar({
     if (!draggingRef.current) return
     draggingRef.current = false
     setDragging(false)
-    applyStage(nearestStage(liveRef.current, vw))
+    applyStage(releaseStage(stageRef.current, moved.current, liveRef.current, vw))
   }
 
   const collapsed = !open && !dragging
   const stage: DockStage = open ? expanded : 'closed'
+  stageRef.current = stage
 
   return (
     <div
