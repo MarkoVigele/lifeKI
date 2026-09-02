@@ -6,6 +6,7 @@ import {
   Magnet,
   Pause,
   Play,
+  Scale,
   Sparkles,
   Spline,
   SunMedium,
@@ -55,10 +56,9 @@ type Props = {
   onEmotion: (e: number) => void
   brush: number
   onBrush: (n: number) => void
-  strength: number
-  onStrength: (n: number) => void
   allowed: readonly ToolId[]
-  dockOpen?: boolean
+  dockOpen: boolean
+  onToggleDock: () => void
 }
 
 const EMO = ['Neugier', 'Angst', 'Aggression', 'Zugehörig', 'Hunger', 'Spiel', 'Dominanz']
@@ -72,114 +72,87 @@ export function GodBar({
   onEmotion,
   brush,
   onBrush,
-  strength,
-  onStrength,
   allowed,
-  dockOpen = false,
+  dockOpen,
+  onToggleDock,
 }: Props) {
   return (
-    <div
+    <nav
       className={cn(
-        'pointer-events-auto absolute z-20 transition-[opacity,transform] duration-300',
-        dockOpen && 'max-md:pointer-events-none max-md:invisible max-md:opacity-0',
-        dockOpen
-          ? 'left-2 right-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] md:left-4 md:right-[400px] md:bottom-5 md:w-auto md:max-w-[calc(100%-400px)] md:translate-x-0'
-          : 'left-2 right-2 bottom-[max(0.5rem,env(safe-area-inset-bottom))] md:left-1/2 md:right-auto md:bottom-5 md:w-[min(96vw,920px)] md:-translate-x-1/2',
+        'pointer-events-auto absolute inset-x-0 bottom-0 z-40 px-2',
+        'md:inset-x-auto md:left-1/2 md:w-[min(96vw,720px)] md:-translate-x-1/2 md:px-0 md:bottom-3',
+        dockOpen && 'md:left-4 md:right-[400px] md:w-auto md:max-w-[calc(100%-400px)] md:translate-x-0',
       )}
+      style={{ paddingBottom: 'max(0.4rem, env(safe-area-inset-bottom))' }}
     >
-      <div className="panel rounded-2xl px-2 py-1.5 md:rounded-3xl md:px-3 md:py-2.5">
-        <div className="flex items-center gap-1 overflow-x-auto scroll-thin md:gap-2 md:pb-1">
-          <button
-            type="button"
-            onClick={onPause}
-            className="mr-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/5 text-zinc-200 hover:bg-white/10 md:mr-1 md:h-9 md:w-9"
-            aria-label={paused ? 'Fortsetzen' : 'Pause'}
-          >
-            {paused ? <Play size={16} /> : <Pause size={16} />}
-          </button>
-          {TOOLS.filter((t) => allowed.includes(t.id)).map((t) => {
-            const Icon = t.icon
-            const active = tool === t.id
-            return (
-              <button
-                key={t.id}
-                type="button"
-                title={t.label}
-                onClick={() => onTool(t.id)}
-                className={cn(
-                  'flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-[11px] tracking-wide md:h-9 md:w-auto md:gap-1.5 md:px-2.5',
-                  active ? 'bg-teal-300/15 text-teal-100' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200',
-                )}
-              >
-                <Icon size={16} className="md:h-3.5 md:w-3.5" />
-                <span className="hidden md:inline">{t.label}</span>
-              </button>
-            )
-          })}
-        </div>
-        {tool === 'emotion' ? (
-          <label className="mt-1 flex min-h-11 items-center gap-2 px-1 text-[11px] text-zinc-400 md:hidden">
-            Gefühl
-            <select
-              value={emotion}
-              onChange={(e) => onEmotion(Number(e.target.value))}
-              className="min-h-11 flex-1 rounded-lg border border-white/10 bg-black/40 px-2 text-zinc-200"
+      <div className="panel flex h-11 items-center gap-1 overflow-x-auto scroll-thin rounded-2xl px-1.5 md:h-11">
+        <button
+          type="button"
+          onClick={onPause}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/5 text-zinc-200 hover:bg-white/10"
+          aria-label={paused ? 'Fortsetzen' : 'Pause'}
+        >
+          {paused ? <Play size={18} /> : <Pause size={18} />}
+        </button>
+        {TOOLS.filter((t) => allowed.includes(t.id)).map((t) => {
+          const Icon = t.icon
+          const active = tool === t.id
+          return (
+            <button
+              key={t.id}
+              type="button"
+              title={t.label}
+              aria-label={t.label}
+              onClick={() => onTool(t.id)}
+              className={cn(
+                'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+                active ? 'bg-teal-300/18 text-teal-100' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-200',
+              )}
             >
-              {EMO.map((name, i) => (
-                <option key={name} value={i}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </label>
+              <Icon size={18} />
+            </button>
+          )
+        })}
+        <label className="ml-1 flex min-w-[5.5rem] flex-1 items-center gap-2 pr-1 text-[10px] tracking-wide text-zinc-500 uppercase">
+          <span className="hidden sm:inline">Radius</span>
+          <input
+            className="anima-slider h-11"
+            type="range"
+            min={18}
+            max={160}
+            value={brush}
+            aria-label="Pinselradius"
+            onChange={(e) => onBrush(Number(e.target.value))}
+          />
+        </label>
+        {tool === 'emotion' ? (
+          <select
+            value={emotion}
+            aria-label="Gefühl"
+            onChange={(e) => onEmotion(Number(e.target.value))}
+            className="h-11 max-w-[7.5rem] shrink-0 rounded-xl border border-white/10 bg-black/40 px-2 text-[11px] text-zinc-200"
+          >
+            {EMO.map((name, i) => (
+              <option key={name} value={i}>
+                {name}
+              </option>
+            ))}
+          </select>
         ) : null}
-        <div className="mt-2 hidden flex-wrap items-center gap-4 px-1 text-[10px] text-zinc-500 md:flex">
-          <label className="flex min-w-[140px] flex-1 items-center gap-2">
-            Radius
-            <input
-              className="anima-slider"
-              type="range"
-              min={18}
-              max={160}
-              value={brush}
-              onChange={(e) => onBrush(Number(e.target.value))}
-            />
-          </label>
-          <label className="flex min-w-[140px] flex-1 items-center gap-2">
-            Stärke
-            <input
-              className="anima-slider"
-              type="range"
-              min={0.2}
-              max={2.8}
-              step={0.05}
-              value={strength}
-              onChange={(e) => onStrength(Number(e.target.value))}
-            />
-          </label>
-          {tool === 'emotion' ? (
-            <label className="flex items-center gap-2">
-              Gefühl
-              <select
-                value={emotion}
-                onChange={(e) => onEmotion(Number(e.target.value))}
-                className="min-h-11 rounded-lg border border-white/10 bg-black/40 px-2 py-1 text-zinc-200 md:min-h-0"
-              >
-                {EMO.map((name, i) => (
-                  <option key={name} value={i}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-          <p className="hidden w-full text-[10px] leading-snug text-zinc-600 md:block">
-            {tool === 'observe'
-              ? 'Ziehen zieht Wesen heran. Kurzer Klick öffnet den Geist. Mausrad: Radius.'
-              : 'Gedrückt halten und ziehen — die Hand wirkt durchgehend. Mausrad ändert den Radius.'}
-          </p>
-        </div>
+        <button
+          type="button"
+          title="Gesetze"
+          aria-label="Gesetze"
+          aria-pressed={dockOpen}
+          onClick={onToggleDock}
+          className={cn(
+            'ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-xl',
+            dockOpen ? 'bg-teal-300/18 text-teal-100' : 'text-zinc-300 hover:bg-white/8',
+          )}
+        >
+          <Scale size={18} />
+        </button>
       </div>
-    </div>
+    </nav>
   )
 }

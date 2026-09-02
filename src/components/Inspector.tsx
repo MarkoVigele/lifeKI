@@ -66,7 +66,7 @@ export function Inspector({ data, onClose }: Props) {
   if (!data) return null
 
   return (
-    <div className="pointer-events-auto absolute top-[max(7.25rem,calc(env(safe-area-inset-top)+6.25rem))] left-3 z-40 w-[min(72vw,280px)] max-h-[min(38svh,320px)] overflow-y-auto scroll-thin md:top-[200px] md:w-[min(92vw,340px)] md:max-h-[min(58vh,560px)]">
+    <div className="pointer-events-auto absolute top-[max(5.5rem,calc(env(safe-area-inset-top)+4.75rem))] left-3 z-40 w-[min(68vw,240px)] max-h-[min(32svh,260px)] overflow-y-auto scroll-thin md:top-[168px] md:w-[min(92vw,340px)] md:max-h-[min(58vh,560px)]">
       <div className="panel rounded-2xl p-3 md:rounded-3xl md:p-3.5">
         <div className="mb-2 flex items-start justify-between gap-3">
           <div>

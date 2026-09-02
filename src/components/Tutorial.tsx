@@ -21,29 +21,29 @@ export function Tutorial({ open, step, complexity, dockOpen = false, onStep, onC
     <div
       className={cn(
         'pointer-events-auto absolute z-40 overflow-y-auto scroll-thin',
-        'top-[max(7.25rem,calc(env(safe-area-inset-top)+6.25rem))] left-3 w-[min(72vw,280px)] max-h-[min(42svh,340px)]',
-        'md:top-[188px] md:right-3 md:left-auto md:w-[min(94vw,400px)] md:max-h-[min(62vh,620px)]',
+        'top-[max(5.5rem,calc(env(safe-area-inset-top)+4.75rem))] left-3 w-[min(68vw,240px)] max-h-[min(34svh,260px)]',
+        'md:top-[168px] md:right-3 md:left-auto md:w-[min(380px,36vw)] md:max-h-[min(56vh,520px)]',
         dockOpen && 'md:right-[400px]',
       )}
     >
       <div className="panel rounded-2xl p-3 md:rounded-3xl md:p-4">
-        <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="mb-2 flex items-start justify-between gap-2">
           <div>
             <div className="text-[10px] tracking-[0.2em] text-teal-200/80 uppercase">
               Anleitung {step + 1} / {TUTORIAL_STEPS.length}
             </div>
-            <h2 className="font-serif text-xl italic leading-tight text-zinc-50 md:text-2xl">{page.title}</h2>
+            <h2 className="font-serif text-lg italic leading-tight text-zinc-50 md:text-2xl">{page.title}</h2>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="min-h-11 shrink-0 rounded-xl bg-white/8 px-3 text-[12px] text-zinc-200 hover:text-zinc-50 md:min-h-0 md:bg-transparent md:px-0 md:text-[11px] md:text-zinc-500 md:hover:text-zinc-200"
+            className="min-h-11 shrink-0 rounded-xl bg-teal-300/15 px-3 text-[12px] text-teal-100 md:min-h-8"
           >
-            Schließen
+            Fertig
           </button>
         </div>
-        <p className="mb-3 text-[13px] leading-relaxed text-zinc-200">{page.lead}</p>
-        <div className="space-y-2 text-[12px] leading-relaxed text-zinc-400">
+        <p className="mb-2 text-[12px] leading-relaxed text-zinc-200 md:mb-3 md:text-[13px]">{page.lead}</p>
+        <div className="hidden space-y-2 text-[12px] leading-relaxed text-zinc-400 md:block">
           {page.body.map((p) => (
             <p key={p}>{p}</p>
           ))}
@@ -77,13 +77,6 @@ export function Tutorial({ open, step, complexity, dockOpen = false, onStep, onC
             className="min-h-11 rounded-xl bg-teal-300/15 px-3 py-1.5 text-[12px] text-teal-100 md:min-h-0 md:text-[11px]"
           >
             {last ? 'Fertig' : 'Weiter'}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="min-h-11 rounded-xl bg-white/6 px-3 py-1.5 text-[12px] text-zinc-300 md:hidden"
-          >
-            Überspringen
           </button>
           {complexity < unlocksTo ? (
             <button

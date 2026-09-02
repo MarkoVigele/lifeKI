@@ -75,7 +75,6 @@ export default function App() {
   const [tool, setTool] = useState<ToolId>('attract')
   const [emotion, setEmotion] = useState(0)
   const [brush, setBrush] = useState(72)
-  const [strength, setStrength] = useState(1.35)
   const [params, setParams] = useState(() => defaultParams())
   const [count, setCount] = useState(FIRST_LIGHT_COUNT)
   const [visual, setVisual] = useState<VisualSettings>(() => loadVisual())
@@ -91,6 +90,25 @@ export default function App() {
   const [fossils, setFossils] = useState<{ species: number; fitness: number; generation: number; hue: number }[]>([])
   const [stepMs, setStepMs] = useState(0)
   const [memoryMb, setMemoryMb] = useState(0)
+  const overlaysRef = useRef({ dock: false, tutorial: false, inspector: false })
+  const complexityRef = useRef(complexity)
+  complexityRef.current = complexity
+
+  overlaysRef.current = { dock: dockOpen, tutorial: tutorialOpen, inspector: inspected != null }
+
+  const dismissOverlays = useCallback(() => {
+    const o = overlaysRef.current
+    if (o.dock) setDockOpen(false)
+    if (o.tutorial) {
+      setTutorialOpen(false)
+      saveGuide(true, complexityRef.current)
+    }
+    if (o.inspector) {
+      selectedRef.current = -1
+      selectedIdRef.current = -1
+      setInspected(null)
+    }
+  }, [])
 
   const worldSize = useCallback(() => {
     return { w: window.innerWidth, h: window.innerHeight }
@@ -328,8 +346,14 @@ export default function App() {
       }
     } else if (ev.type === 'pointerup' || ev.type === 'pointercancel') {
       if (ptr.down && !ptr.dragged) {
-        if (toolRef.current === 'observe') inspectAt(pos.x, pos.y)
-        else applyHeldTool(pos.x, pos.y)
+        const o = overlaysRef.current
+        if (o.dock || o.tutorial || o.inspector) {
+          dismissOverlays()
+        } else if (toolRef.current === 'observe') {
+          inspectAt(pos.x, pos.y)
+        } else {
+          applyHeldTool(pos.x, pos.y)
+        }
       }
       ptr.down = false
       ptr.dragged = false
@@ -491,8 +515,6 @@ export default function App() {
             memoryMb={memoryMb}
             paused={paused}
             presetName={currentPreset}
-            dockOpen={dockOpen}
-            onToggleDock={() => setDockOpen((v) => !v)}
             onOpenTutorial={() => setTutorialOpen(true)}
             complexity={complexity}
           />
@@ -545,13 +567,9 @@ export default function App() {
               brushRef.current = n
               setBrush(n)
             }}
-            strength={strength}
-            onStrength={(n) => {
-              strengthRef.current = n
-              setStrength(n)
-            }}
             allowed={COMPLEXITY_TOOLS[complexity]}
             dockOpen={dockOpen}
+            onToggleDock={() => setDockOpen((v) => !v)}
           />
           <ControlDock
             open={dockOpen}

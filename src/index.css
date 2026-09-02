@@ -9,6 +9,16 @@
   --color-void: #010103;
 }
 
+:root {
+  --dock-space: calc(3.35rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 768px) {
+  :root {
+    --dock-space: 0px;
+  }
+}
+
 html,
 body,
 #root {

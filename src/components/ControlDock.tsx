@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useRef, useState, type PointerEvent, type ReactNode } from 'react'
 import { ChevronDown, Download, Star, Trash2, Upload } from 'lucide-react'
 import { SliderField } from './SliderField'
 import { PARAM_GROUPS, type ParamKey } from '@/lib/params'
@@ -60,6 +60,8 @@ export function ControlDock({
   onComplexity,
 }: Props) {
   const [openId, setOpenId] = useState('guide')
+  const [drag, setDrag] = useState({ x: 0, y: 0 })
+  const startRef = useRef<{ x: number; y: number } | null>(null)
   const full = complexity >= MAX_COMPLEXITY
   const allowedSliders = COMPLEXITY_SLIDERS[complexity] ?? []
   const allowedPresets = COMPLEXITY_PRESETS[complexity] ?? []
@@ -72,45 +74,74 @@ export function ControlDock({
   }, [allowedSliders, full])
   const presets = full ? PRESETS : PRESETS.filter((p) => allowedPresets.includes(p.id))
 
+  const onGrabDown = (e: PointerEvent<HTMLDivElement>) => {
+    startRef.current = { x: e.clientX, y: e.clientY }
+    e.currentTarget.setPointerCapture(e.pointerId)
+  }
+  const onGrabMove = (e: PointerEvent<HTMLDivElement>) => {
+    if (!startRef.current) return
+    const dx = e.clientX - startRef.current.x
+    const dy = e.clientY - startRef.current.y
+    setDrag({
+      x: open ? Math.max(0, dx) : Math.min(0, dx),
+      y: open ? Math.max(0, dy) : Math.min(0, dy),
+    })
+  }
+  const onGrabUp = (e: PointerEvent<HTMLDivElement>) => {
+    if (!startRef.current) return
+    const dx = e.clientX - startRef.current.x
+    const dy = e.clientY - startRef.current.y
+    startRef.current = null
+    setDrag({ x: 0, y: 0 })
+    const narrow = window.matchMedia('(max-width: 767.98px)').matches
+    if (narrow) {
+      if (open && dy > 48) onToggle()
+      else if (!open && (dy < -48 || (Math.abs(dy) < 12 && Math.abs(dx) < 12))) onToggle()
+    } else if (open && dx > 64) {
+      onToggle()
+    }
+  }
+  const grab = { onPointerDown: onGrabDown, onPointerMove: onGrabMove, onPointerUp: onGrabUp }
+
+  const sheetShift =
+    drag.y !== 0 || drag.x !== 0
+      ? `translate3d(${drag.x}px, ${drag.y}px, 0)`
+      : undefined
+
   return (
     <>
       {!open ? (
-        <button
-          type="button"
-          onClick={onToggle}
-          className="pointer-events-auto fixed top-[38%] right-0 z-30 flex min-h-11 items-center rounded-l-2xl border border-r-0 border-teal-300/30 bg-teal-300/15 px-3 text-[11px] tracking-[0.18em] text-teal-100 uppercase md:hidden"
+        <div
+          className="pointer-events-auto fixed inset-x-0 z-30 flex cursor-grab justify-center pt-1 md:hidden"
+          style={{ bottom: 'var(--dock-space)' }}
+          {...grab}
         >
-          Gesetze
-        </button>
+          <span className="h-1.5 w-10 rounded-full bg-white/35" aria-hidden />
+        </div>
       ) : null}
     <aside
       className={cn(
-        'pointer-events-auto z-30 flex flex-col transition-transform duration-300',
-        'fixed left-0 right-0 top-auto bottom-0 h-[45svh] max-h-[45svh] overflow-hidden',
-        open ? 'translate-y-0' : 'translate-y-full max-md:pointer-events-none',
+        'pointer-events-auto z-30 flex flex-col',
+        'fixed left-0 right-0 top-auto bottom-[var(--dock-space)] max-h-[min(42svh,42dvh)] overflow-hidden',
+        !sheetShift && 'transition-transform duration-300',
+        open ? 'translate-y-0' : 'translate-y-[calc(100%+1.25rem)] max-md:pointer-events-none',
         'md:absolute md:left-auto md:right-0 md:top-0 md:bottom-0 md:max-h-none md:h-full',
-        open ? 'md:translate-x-0 md:translate-y-0' : 'md:translate-x-[calc(100%-18px)] md:translate-y-0',
+        open ? 'md:translate-x-0 md:translate-y-0' : 'md:translate-x-full md:translate-y-0',
       )}
+      style={sheetShift ? { transform: sheetShift } : undefined}
     >
-      {open ? (
-        <button
-          type="button"
-          onClick={onToggle}
-          className="absolute top-5 left-0 z-10 hidden min-h-11 -translate-x-full items-center rounded-l-2xl border border-r-0 border-white/10 bg-black/70 px-2 text-[10px] tracking-[0.18em] text-teal-100 uppercase md:flex"
-        >
-          Zu
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={onToggle}
-          className="absolute top-5 left-0 z-10 hidden min-h-11 -translate-x-full items-center rounded-l-2xl border border-r-0 border-teal-300/30 bg-teal-300/15 px-2 text-[10px] tracking-[0.18em] text-teal-100 uppercase md:flex"
-        >
-          Gesetze
-        </button>
-      )}
-      <div className="panel flex h-full min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border-x-0 border-b-0 pb-[env(safe-area-inset-bottom)] md:w-[360px] md:rounded-none md:rounded-l-3xl md:border-x md:border-y-0 md:border-r-0 md:pb-0">
-        <div className="sticky top-0 z-10 shrink-0 border-b border-white/6 bg-[rgba(8,9,14,0.92)] px-4 py-3 md:static md:bg-transparent md:py-4">
+      <div className="panel relative flex h-full min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border-x-0 border-b-0 md:w-[360px] md:rounded-none md:rounded-l-3xl md:border-x md:border-y-0 md:border-r-0">
+        <div
+          className="absolute inset-y-0 left-0 z-20 hidden w-3 cursor-ew-resize touch-none md:block"
+          {...grab}
+        />
+        <div className="sticky top-0 z-10 shrink-0 border-b border-white/6 bg-[rgba(8,9,14,0.92)] px-4 pt-1 pb-3 md:static md:bg-transparent md:pt-4 md:pb-4">
+          <div
+            className="flex cursor-grab justify-center py-1.5 touch-none md:hidden"
+            {...grab}
+          >
+            <span className="h-1.5 w-10 rounded-full bg-white/35" aria-hidden />
+          </div>
           <div className="flex items-start justify-between gap-3">
             <div className="font-serif text-xl italic">Instrumente</div>
             <button

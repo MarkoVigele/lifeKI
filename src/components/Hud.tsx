@@ -9,8 +9,6 @@ type Props = {
   memoryMb: number
   paused: boolean
   presetName: string
-  dockOpen: boolean
-  onToggleDock: () => void
   onOpenTutorial: () => void
   complexity: number
 }
@@ -19,7 +17,7 @@ function Cell({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
       <div className="text-[9px] uppercase tracking-[0.16em] text-zinc-500">{label}</div>
-      <div className="truncate font-mono text-[12px] tabular-nums text-zinc-200">{value}</div>
+      <div className="truncate font-mono text-[11px] tabular-nums text-zinc-200 md:text-[12px]">{value}</div>
     </div>
   )
 }
@@ -31,8 +29,6 @@ export function Hud({
   memoryMb,
   paused,
   presetName,
-  dockOpen,
-  onToggleDock,
   onOpenTutorial,
   complexity,
 }: Props) {
@@ -42,42 +38,35 @@ export function Hud({
   const simple = complexity < 2
 
   return (
-    <div className="pointer-events-none absolute left-3 top-[max(0.75rem,env(safe-area-inset-top))] z-20 w-[min(calc(100vw-5rem),280px)] md:w-[min(calc(100vw-1.5rem),320px)]">
-      <div className="mb-2.5 flex items-end justify-between gap-3">
+    <div className="pointer-events-none absolute left-3 top-[max(0.55rem,env(safe-area-inset-top))] z-20 w-[min(calc(100vw-1.5rem),240px)] md:w-[min(calc(100vw-1.5rem),300px)]">
+      <div className="mb-1.5 flex items-end justify-between gap-2">
         <div className="min-w-0">
-          <div className="font-serif text-[26px] italic leading-none tracking-tight text-zinc-100">lifeKI</div>
-          <div className="mt-1 truncate text-[11px] tracking-[0.16em] text-zinc-500 uppercase">
+          <div className="font-serif text-[22px] italic leading-none tracking-tight text-zinc-100 md:text-[26px]">lifeKI</div>
+          <div className="mt-0.5 truncate text-[10px] tracking-[0.16em] text-zinc-500 uppercase">
             {presetName}
             {paused ? ' · gehalten' : ''}
           </div>
         </div>
-        <div className="flex shrink-0 gap-1.5">
-          <button
-            type="button"
-            onClick={onOpenTutorial}
-            className="pointer-events-auto min-h-11 rounded-full border border-teal-300/25 bg-teal-300/10 px-3 text-[11px] tracking-[0.14em] text-teal-100 hover:bg-teal-300/18 md:min-h-0 md:px-2.5 md:py-1 md:text-[10px]"
-          >
-            Hilfe
-          </button>
-          <button
-            type="button"
-            onClick={onToggleDock}
-            className="pointer-events-auto min-h-11 rounded-full border border-white/10 bg-black/40 px-3 text-[11px] tracking-[0.14em] text-teal-200/90 hover:bg-white/8 md:hidden"
-          >
-            {dockOpen ? 'Zu' : 'Gesetze'}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onOpenTutorial}
+          className="pointer-events-auto min-h-11 rounded-full border border-teal-300/25 bg-teal-300/10 px-3 text-[11px] tracking-[0.14em] text-teal-100 hover:bg-teal-300/18 md:min-h-8 md:px-2.5 md:text-[10px]"
+        >
+          Hilfe
+        </button>
       </div>
-      <div className="panel pointer-events-auto w-full rounded-2xl px-3.5 py-3">
-        <p className="mb-2.5 h-[3.6rem] overflow-hidden text-[12px] leading-5 text-zinc-300">{liveCaption(stats)}</p>
+      <div className="panel pointer-events-none w-full rounded-2xl px-3 py-2 md:px-3.5 md:py-2.5">
+        <p className="mb-1.5 truncate text-[11px] leading-5 text-zinc-300 md:mb-2 md:whitespace-normal md:text-[12px]">
+          {liveCaption(stats)}
+        </p>
         {simple ? (
-          <div className="grid grid-cols-3 gap-x-3 gap-y-2">
+          <div className="grid grid-cols-3 gap-x-2 gap-y-1">
             <Cell label="Leben" value={stats ? String(Math.round(stats.alive)) : '—'} />
             <Cell label="Ebene" value={COMPLEXITY_LABEL[complexity]} />
             <Cell label="Zeit" value={phase} />
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-x-3 gap-y-2">
+          <div className="grid grid-cols-3 gap-x-2 gap-y-1.5">
             <Cell label="Leben" value={stats ? String(Math.round(stats.alive)) : '—'} />
             <Cell label="Gen." value={stats ? String(Math.round(stats.maxGen)) : '—'} />
             <Cell label="FPS" value={fps.toFixed(0)} />
