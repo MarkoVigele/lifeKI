@@ -1,96 +1,121 @@
-import { useRef, useState, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
+import { SlidersHorizontal } from 'lucide-react'
+import {
+  dragHidden,
+  sheetHidden,
+  sheetMetrics,
+  snapSheetStage,
+  type DockStage,
+} from '@/lib/sheetSnap'
 
-const SNAP = 48
-
-export type DockStage = 'narrow' | 'wide'
+export type { DockStage }
 
 export function SwipeSidebar({
   stage,
-  onExpand,
-  onCollapse,
-  onClose,
+  onStage,
   children,
 }: {
   stage: DockStage
-  onExpand: () => void
-  onCollapse: () => void
-  onClose: () => void
+  onStage: (stage: DockStage) => void
   children: ReactNode
 }) {
   const startX = useRef<number | null>(null)
   const dxRef = useRef(0)
   const stageRef = useRef(stage)
+  const onStageRef = useRef(onStage)
   const [dx, setDx] = useState(0)
   const [dragging, setDragging] = useState(false)
+  const [vw, setVw] = useState(() => (typeof window === 'undefined' ? 390 : window.innerWidth))
   stageRef.current = stage
+  onStageRef.current = onStage
 
-  const reset = () => {
-    startX.current = null
-    dxRef.current = 0
-    setDragging(false)
-    setDx(0)
-  }
+  useEffect(() => {
+    const onResize = () => setVw(window.innerWidth)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   const finish = () => {
     if (startX.current == null) return
     const movedX = dxRef.current
-    const st = stageRef.current
-    reset()
-
-    if (Math.abs(movedX) < SNAP) return
-
-    if (st === 'wide' && movedX > SNAP) onCollapse()
-    else if (st === 'narrow' && movedX > SNAP) onClose()
-    else if (st === 'narrow' && movedX < -SNAP) onExpand()
+    const next = snapSheetStage(stageRef.current, movedX)
+    startX.current = null
+    dxRef.current = 0
+    setDragging(false)
+    setDx(0)
+    if (next !== stageRef.current) onStageRef.current(next)
   }
 
-  const down = (e: PointerEvent<HTMLDivElement>) => {
+  useEffect(() => {
+    if (!dragging) return
+    const move = (e: PointerEvent) => {
+      if (startX.current == null) return
+      const rawX = e.clientX - startX.current
+      dxRef.current = rawX
+      setDx(rawX)
+    }
+    const up = () => finish()
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', up)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', up)
+    }
+  }, [dragging])
+
+  const down = (e: ReactPointerEvent<HTMLDivElement>) => {
     startX.current = e.clientX
     dxRef.current = 0
+    setDx(0)
     setDragging(true)
     e.currentTarget.setPointerCapture(e.pointerId)
+    e.preventDefault()
     e.stopPropagation()
   }
 
-  const move = (e: PointerEvent<HTMLDivElement>) => {
-    if (startX.current == null) return
-    const rawX = e.clientX - startX.current
-    dxRef.current = rawX
-    setDx(rawX)
-  }
-
-  const closeShift = Math.max(0, dx)
-  const expandPx = stage === 'narrow' ? Math.min(-Math.min(0, dx), 140) : 0
-  const width =
-    stage === 'wide'
-      ? 'min(300px, 82vw)'
-      : expandPx > 0
-        ? `min(300px, calc(44vw + ${expandPx}px))`
-        : 'min(168px, 44vw)'
+  const m = sheetMetrics(vw)
+  const hidden = dragging ? dragHidden(stage, dx, m) : sheetHidden(stage, m)
+  const open = stage !== 'closed'
 
   return (
     <div
-      className="relative flex h-full min-h-0 flex-col"
+      className="relative h-full min-h-0"
+      data-dock-stage={stage}
       style={{
-        width,
-        transform: `translateX(${closeShift}px)`,
-        transition: dragging ? 'none' : 'transform 200ms ease, width 200ms ease',
+        width: m.high,
+        transform: `translateX(${hidden}px)`,
+        transition: dragging ? 'none' : 'transform 200ms ease',
       }}
     >
       <div
-        className="absolute inset-y-0 left-0 z-20 flex w-9 touch-pan-x flex-col items-center justify-center"
-        style={{ touchAction: 'pan-x' }}
+        className="absolute inset-y-0 left-0 z-20 flex w-10 flex-col items-center justify-center"
+        style={{ touchAction: 'none' }}
         onPointerDown={down}
-        onPointerMove={move}
-        onPointerUp={finish}
-        onPointerCancel={finish}
-        onClick={(e) => e.preventDefault()}
         role="separator"
-        aria-label={stage === 'wide' ? 'Nach rechts wischen zum Verkleinern' : 'Nach links wischen zum Verbreitern'}
+        aria-label={
+          stage === 'high'
+            ? 'Nach rechts wischen zum Verkleinern'
+            : stage === 'mid'
+              ? 'Nach links wischen zum Verbreitern'
+              : 'Nach links wischen für Gesetze'
+        }
       >
         <span className="h-10 w-1 rounded-full bg-white/40" />
+        {stage === 'closed' ? (
+          <span className="mt-2 text-teal-100/80">
+            <SlidersHorizontal size={16} />
+          </span>
+        ) : null}
       </div>
-      <div className="flex h-full min-h-0 w-full min-w-0 flex-col pl-5">{children}</div>
+      <div
+        className="flex h-full min-h-0 w-full min-w-0 flex-col pl-5"
+        aria-hidden={!open}
+        style={{ pointerEvents: open ? 'auto' : 'none' }}
+      >
+        {children}
+      </div>
     </div>
   )
 }

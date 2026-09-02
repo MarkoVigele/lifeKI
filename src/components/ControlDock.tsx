@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
-import { ChevronDown, Download, SlidersHorizontal, Star, Trash2, Upload } from 'lucide-react'
+import { useMemo, useState, type ReactNode } from 'react'
+import { ChevronDown, Download, Star, Trash2, Upload } from 'lucide-react'
 import { SwipeSidebar } from './SwipeSidebar'
+import type { DockStage } from '@/lib/sheetSnap'
 import { SliderField } from './SliderField'
 import { PARAM_GROUPS, type ParamKey } from '@/lib/params'
 import { PRESET_CATEGORIES, PRESETS } from '@/lib/presets'
@@ -19,8 +20,8 @@ const RENDER_FPS_OPTIONS: { value: RenderFps; label: string }[] = [
 type Fossil = { species: number; fitness: number; generation: number; hue: number }
 
 type Props = {
-  open: boolean
-  onToggle: () => void
+  stage: DockStage
+  onStage: (stage: DockStage) => void
   params: Float32Array
   onParam: (key: ParamKey, value: number) => void
   count: number
@@ -44,8 +45,8 @@ type Props = {
 }
 
 export function ControlDock({
-  open,
-  onToggle,
+  stage,
+  onStage,
   params,
   onParam,
   count,
@@ -68,12 +69,9 @@ export function ControlDock({
   onComplexity,
 }: Props) {
   const [openId, setOpenId] = useState('')
-  const [wide, setWide] = useState(false)
+  const open = stage !== 'closed'
+  const onToggle = () => onStage(open ? 'closed' : 'mid')
   const mode = modeFromComplexity(complexity)
-
-  useEffect(() => {
-    if (!open) setWide(false)
-  }, [open])
   const full = complexity >= MAX_COMPLEXITY
   const allowedSliders = COMPLEXITY_SLIDERS[complexity] ?? []
   const allowedPresets = COMPLEXITY_PRESETS[complexity] ?? []
@@ -320,34 +318,13 @@ export function ControlDock({
 
   return (
     <>
-      {!open ? (
-        <button
-          type="button"
-          title="Gesetze"
-          aria-label="Gesetze"
-          className="pointer-events-auto absolute top-[38%] right-0 z-30 flex h-16 w-7 items-center justify-center rounded-l-xl border border-r-0 border-white/10 bg-black/55 text-teal-100/80 md:hidden"
-          onClick={onToggle}
-        >
-          <SlidersHorizontal size={16} />
-        </button>
-      ) : null}
-
-      {open ? (
-        <div className="pointer-events-none absolute top-0 right-0 z-30 flex h-[calc(100dvh-4.5rem)] min-h-0 w-max max-w-[80vw] flex-col pt-[max(0.35rem,env(safe-area-inset-top))] md:hidden">
-          <div className="pointer-events-auto flex h-full min-h-0 flex-col">
-            <SwipeSidebar
-              stage={wide ? 'wide' : 'narrow'}
-              onExpand={() => setWide(true)}
-              onCollapse={() => setWide(false)}
-              onClose={onToggle}
-            >
-              <div className="panel flex h-full min-h-0 w-full flex-col rounded-l-2xl border-y-0 border-r-0">
-                {renderFields()}
-              </div>
-            </SwipeSidebar>
+      <div className="pointer-events-none absolute top-0 right-0 z-30 h-[calc(100dvh-4.5rem)] min-h-0 pt-[max(0.35rem,env(safe-area-inset-top))] md:hidden">
+        <SwipeSidebar stage={stage} onStage={onStage}>
+          <div className="panel flex h-full min-h-0 w-full flex-col rounded-l-2xl border-y-0 border-r-0">
+            {renderFields()}
           </div>
-        </div>
-      ) : null}
+        </SwipeSidebar>
+      </div>
 
       <aside
         className={cn(
