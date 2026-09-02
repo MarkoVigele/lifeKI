@@ -92,6 +92,7 @@ export default function App() {
   const [memoryMb, setMemoryMb] = useState(0)
   const overlaysRef = useRef({ dock: false, tutorial: false, inspector: false })
   const complexityRef = useRef(complexity)
+  const onPointerRef = useRef<(ev: PointerEvent) => void>(() => {})
   complexityRef.current = complexity
 
   overlaysRef.current = { dock: dockOpen, tutorial: tutorialOpen, inspector: inspected != null }
@@ -345,15 +346,14 @@ export default function App() {
         if (!isContinuous(toolRef.current)) applyHeldTool(pos.x, pos.y)
       }
     } else if (ev.type === 'pointerup' || ev.type === 'pointercancel') {
-      if (ptr.down && !ptr.dragged) {
-        const o = overlaysRef.current
-        if (o.dock || o.tutorial || o.inspector) {
-          dismissOverlays()
-        } else if (toolRef.current === 'observe') {
-          inspectAt(pos.x, pos.y)
-        } else {
-          applyHeldTool(pos.x, pos.y)
-        }
+      const o = overlaysRef.current
+      const overlayOpen = o.dock || o.tutorial || o.inspector
+      const painting = ptr.dragged && isContinuous(toolRef.current)
+      if (ptr.down && overlayOpen && !painting) {
+        dismissOverlays()
+      } else if (ptr.down && !ptr.dragged) {
+        if (toolRef.current === 'observe') inspectAt(pos.x, pos.y)
+        else applyHeldTool(pos.x, pos.y)
       }
       ptr.down = false
       ptr.dragged = false
@@ -361,13 +361,14 @@ export default function App() {
       ptr.visible = false
     }
   }
+  onPointerRef.current = onPointer
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const down = (e: PointerEvent) => onPointer(e)
-    const move = (e: PointerEvent) => onPointer(e)
-    const up = (e: PointerEvent) => onPointer(e)
+    const down = (e: PointerEvent) => onPointerRef.current(e)
+    const move = (e: PointerEvent) => onPointerRef.current(e)
+    const up = (e: PointerEvent) => onPointerRef.current(e)
     const wheel = (e: WheelEvent) => {
       e.preventDefault()
       const next = Math.min(160, Math.max(18, brushRef.current + (e.deltaY > 0 ? -8 : 8)))

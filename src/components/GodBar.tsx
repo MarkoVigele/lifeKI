@@ -79,9 +79,10 @@ export function GodBar({
   return (
     <nav
       className={cn(
-        'pointer-events-auto absolute inset-x-0 bottom-0 z-40 px-2',
-        'md:inset-x-auto md:left-1/2 md:w-[min(96vw,720px)] md:-translate-x-1/2 md:px-0 md:bottom-3',
-        dockOpen && 'md:left-4 md:right-[400px] md:w-auto md:max-w-[calc(100%-400px)] md:translate-x-0',
+        'pointer-events-auto absolute z-40 px-2',
+        dockOpen
+          ? 'inset-x-0 bottom-0 md:left-4 md:right-[400px] md:w-auto md:max-w-[calc(100%-400px)] md:translate-x-0 md:px-0 md:bottom-3'
+          : 'inset-x-0 bottom-0 md:left-1/2 md:right-auto md:w-[min(96vw,720px)] md:-translate-x-1/2 md:px-0 md:bottom-3',
       )}
       style={{ paddingBottom: 'max(0.4rem, env(safe-area-inset-bottom))' }}
     >
