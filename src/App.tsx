@@ -500,6 +500,7 @@ export default function App() {
             open={tutorialOpen}
             step={tutorialStep}
             complexity={complexity}
+            dockOpen={dockOpen}
             onStep={setTutorialStep}
             onClose={() => {
               setTutorialOpen(false)
@@ -550,6 +551,7 @@ export default function App() {
               setStrength(n)
             }}
             allowed={COMPLEXITY_TOOLS[complexity]}
+            dockOpen={dockOpen}
           />
           <ControlDock
             open={dockOpen}

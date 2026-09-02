@@ -5,29 +5,41 @@ type Props = {
   open: boolean
   step: number
   complexity: number
+  dockOpen?: boolean
   onStep: (n: number) => void
   onClose: () => void
   onComplexity: (n: number) => void
 }
 
-export function Tutorial({ open, step, complexity, onStep, onClose, onComplexity }: Props) {
+export function Tutorial({ open, step, complexity, dockOpen = false, onStep, onClose, onComplexity }: Props) {
   if (!open) return null
   const page = TUTORIAL_STEPS[step]
   const last = step === TUTORIAL_STEPS.length - 1
   const unlocksTo = Math.min(4, step + 1)
 
   return (
-    <div className="pointer-events-auto absolute top-[188px] right-3 z-40 w-[min(94vw,400px)] max-h-[min(62vh,620px)] overflow-y-auto scroll-thin md:right-[min(24px,calc(100vw-420px))]">
-      <div className="panel rounded-3xl p-4">
+    <div
+      className={cn(
+        'pointer-events-auto absolute z-40 overflow-y-auto scroll-thin',
+        'top-[max(7.25rem,calc(env(safe-area-inset-top)+6.25rem))] left-3 w-[min(72vw,280px)] max-h-[min(42svh,340px)]',
+        'md:top-[188px] md:right-3 md:left-auto md:w-[min(94vw,400px)] md:max-h-[min(62vh,620px)]',
+        dockOpen && 'md:right-[384px]',
+      )}
+    >
+      <div className="panel rounded-2xl p-3 md:rounded-3xl md:p-4">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             <div className="text-[10px] tracking-[0.2em] text-teal-200/80 uppercase">
               Anleitung {step + 1} / {TUTORIAL_STEPS.length}
             </div>
-            <h2 className="font-serif text-2xl italic leading-tight text-zinc-50">{page.title}</h2>
+            <h2 className="font-serif text-xl italic leading-tight text-zinc-50 md:text-2xl">{page.title}</h2>
           </div>
-          <button type="button" onClick={onClose} className="text-[11px] text-zinc-500 hover:text-zinc-200">
-            schließen
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-11 shrink-0 rounded-xl bg-white/8 px-3 text-[12px] text-zinc-200 hover:text-zinc-50 md:min-h-0 md:bg-transparent md:px-0 md:text-[11px] md:text-zinc-500 md:hover:text-zinc-200"
+          >
+            Schließen
           </button>
         </div>
         <p className="mb-3 text-[13px] leading-relaxed text-zinc-200">{page.lead}</p>
@@ -55,28 +67,35 @@ export function Tutorial({ open, step, complexity, onStep, onClose, onComplexity
             type="button"
             disabled={step === 0}
             onClick={() => onStep(step - 1)}
-            className="rounded-xl bg-white/6 px-3 py-1.5 text-[11px] text-zinc-300 disabled:opacity-30"
+            className="min-h-11 rounded-xl bg-white/6 px-3 py-1.5 text-[12px] text-zinc-300 disabled:opacity-30 md:min-h-0 md:text-[11px]"
           >
             Zurück
           </button>
           <button
             type="button"
             onClick={() => (last ? onClose() : onStep(step + 1))}
-            className="rounded-xl bg-teal-300/15 px-3 py-1.5 text-[11px] text-teal-100"
+            className="min-h-11 rounded-xl bg-teal-300/15 px-3 py-1.5 text-[12px] text-teal-100 md:min-h-0 md:text-[11px]"
           >
             {last ? 'Fertig' : 'Weiter'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-11 rounded-xl bg-white/6 px-3 py-1.5 text-[12px] text-zinc-300 md:hidden"
+          >
+            Überspringen
           </button>
           {complexity < unlocksTo ? (
             <button
               type="button"
               onClick={() => onComplexity(unlocksTo)}
-              className={cn('rounded-xl px-3 py-1.5 text-[11px] text-amber-100', 'bg-amber-300/12')}
+              className={cn('min-h-11 rounded-xl px-3 py-1.5 text-[12px] text-amber-100 md:min-h-0 md:text-[11px]', 'bg-amber-300/12')}
             >
               Nächste Ebene freischalten
             </button>
           ) : null}
         </div>
-        <p className="mt-3 text-[10px] text-zinc-600">
+        <p className="mt-3 hidden text-[10px] text-zinc-600 md:block">
           Taste T öffnet diese Anleitung wieder. Du musst nicht alles auf einmal verstehen.
         </p>
       </div>

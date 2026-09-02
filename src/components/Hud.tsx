@@ -42,7 +42,7 @@ export function Hud({
   const simple = complexity < 2
 
   return (
-    <div className="pointer-events-none absolute left-3 top-3 z-20 w-[min(calc(100vw-1.5rem),320px)]">
+    <div className="pointer-events-none absolute left-3 top-[max(0.75rem,env(safe-area-inset-top))] z-20 w-[min(calc(100vw-5rem),280px)] md:w-[min(calc(100vw-1.5rem),320px)]">
       <div className="mb-2.5 flex items-end justify-between gap-3">
         <div className="min-w-0">
           <div className="font-serif text-[26px] italic leading-none tracking-tight text-zinc-100">lifeKI</div>
@@ -55,14 +55,14 @@ export function Hud({
           <button
             type="button"
             onClick={onOpenTutorial}
-            className="pointer-events-auto rounded-full border border-teal-300/25 bg-teal-300/10 px-2.5 py-1 text-[10px] tracking-[0.14em] text-teal-100 hover:bg-teal-300/18"
+            className="pointer-events-auto min-h-11 rounded-full border border-teal-300/25 bg-teal-300/10 px-3 text-[11px] tracking-[0.14em] text-teal-100 hover:bg-teal-300/18 md:min-h-0 md:px-2.5 md:py-1 md:text-[10px]"
           >
             Hilfe
           </button>
           <button
             type="button"
             onClick={onToggleDock}
-            className="pointer-events-auto rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-[10px] tracking-[0.14em] text-teal-200/90 hover:bg-white/8"
+            className="pointer-events-auto min-h-11 rounded-full border border-white/10 bg-black/40 px-3 text-[11px] tracking-[0.14em] text-teal-200/90 hover:bg-white/8 md:hidden"
           >
             {dockOpen ? 'Zu' : 'Gesetze'}
           </button>

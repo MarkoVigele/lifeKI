@@ -73,17 +73,30 @@ export function ControlDock({
   const presets = full ? PRESETS : PRESETS.filter((p) => allowedPresets.includes(p.id))
 
   return (
+    <>
+      {!open ? (
+        <button
+          type="button"
+          onClick={onToggle}
+          className="pointer-events-auto fixed top-[38%] right-0 z-30 flex min-h-11 items-center rounded-l-2xl border border-r-0 border-teal-300/30 bg-teal-300/15 px-3 text-[11px] tracking-[0.18em] text-teal-100 uppercase md:hidden"
+        >
+          Gesetze
+        </button>
+      ) : null}
     <aside
       className={cn(
-        'pointer-events-auto absolute right-0 top-0 z-30 flex h-full flex-col transition-transform duration-300',
-        open ? 'translate-x-0' : 'translate-x-[calc(100%-18px)]',
+        'pointer-events-auto z-30 flex flex-col transition-transform duration-300',
+        'fixed inset-x-0 bottom-0 max-h-[45svh]',
+        open ? 'translate-y-0' : 'translate-y-full max-md:pointer-events-none',
+        'md:absolute md:right-0 md:top-0 md:bottom-auto md:inset-x-auto md:max-h-none md:h-full',
+        open ? 'md:translate-x-0 md:translate-y-0' : 'md:translate-x-[calc(100%-18px)] md:translate-y-0',
       )}
     >
       {open ? (
         <button
           type="button"
           onClick={onToggle}
-          className="absolute top-5 left-0 z-10 -translate-x-full rounded-l-2xl border border-r-0 border-white/10 bg-black/70 px-2 py-3 text-[10px] tracking-[0.18em] text-teal-100 uppercase"
+          className="absolute top-5 left-0 z-10 hidden min-h-11 -translate-x-full items-center rounded-l-2xl border border-r-0 border-white/10 bg-black/70 px-2 text-[10px] tracking-[0.18em] text-teal-100 uppercase md:flex"
         >
           Zu
         </button>
@@ -91,17 +104,22 @@ export function ControlDock({
         <button
           type="button"
           onClick={onToggle}
-          className="absolute top-5 left-0 z-10 -translate-x-full rounded-l-2xl border border-r-0 border-teal-300/30 bg-teal-300/15 px-2 py-3 text-[10px] tracking-[0.18em] text-teal-100 uppercase"
+          className="absolute top-5 left-0 z-10 hidden min-h-11 -translate-x-full items-center rounded-l-2xl border border-r-0 border-teal-300/30 bg-teal-300/15 px-2 text-[10px] tracking-[0.18em] text-teal-100 uppercase md:flex"
         >
           Gesetze
         </button>
       )}
-      <div className="panel flex h-full w-[min(100vw,360px)] flex-col overflow-hidden rounded-none border-y-0 border-r-0 md:rounded-l-3xl">
-        <div className="border-b border-white/6 px-4 py-4">
+      <div className="panel flex h-full min-h-0 w-full flex-col overflow-hidden rounded-t-3xl border-x-0 border-b-0 pb-[env(safe-area-inset-bottom)] md:w-[360px] md:rounded-none md:rounded-l-3xl md:border-x md:border-y-0 md:border-r-0 md:pb-0">
+        <div className="sticky top-0 z-10 shrink-0 border-b border-white/6 bg-[rgba(8,9,14,0.92)] px-4 py-3 md:static md:bg-transparent md:py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="font-serif text-xl italic">Instrumente</div>
-            <button type="button" onClick={onToggle} className="text-[11px] text-zinc-500 hover:text-zinc-200">
-              einklappen
+            <button
+              type="button"
+              onClick={onToggle}
+              className="min-h-11 min-w-11 rounded-xl px-3 text-[13px] text-zinc-200 hover:text-zinc-50 md:min-h-0 md:min-w-0 md:px-0 md:text-[11px] md:text-zinc-500 md:hover:text-zinc-200"
+            >
+              <span className="md:hidden">Fertig</span>
+              <span className="hidden md:inline">einklappen</span>
             </button>
           </div>
           <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
@@ -110,12 +128,12 @@ export function ControlDock({
           <button
             type="button"
             onClick={onNewWorld}
-            className="mt-3 w-full rounded-2xl bg-teal-300/12 px-3 py-2 text-[12px] text-teal-100 hover:bg-teal-300/18"
+            className="mt-3 min-h-11 w-full rounded-2xl bg-teal-300/12 px-3 py-2 text-[12px] text-teal-100 hover:bg-teal-300/18 md:min-h-0"
           >
             Neue Welt aus diesen Gesetzen
           </button>
         </div>
-        <div className="scroll-thin flex-1 overflow-y-auto px-3 py-2">
+        <div className="scroll-thin min-h-0 flex-1 overflow-y-auto px-3 py-2">
           <Section id="guide" title="Ebene" openId={openId} setOpenId={setOpenId}>
             <div className="flex flex-wrap gap-1.5 pb-1">
               {COMPLEXITY_LABEL.map((label, i) => (
@@ -124,7 +142,7 @@ export function ControlDock({
                   type="button"
                   onClick={() => onComplexity(i)}
                   className={cn(
-                    'rounded-full px-2.5 py-1 text-[10px]',
+                    'min-h-11 rounded-full px-3 text-[12px] md:min-h-0 md:px-2.5 md:py-1 md:text-[10px]',
                     complexity === i ? 'bg-teal-300/18 text-teal-100' : 'bg-white/5 text-zinc-500 hover:text-zinc-300',
                   )}
                 >
@@ -151,7 +169,7 @@ export function ControlDock({
                           type="button"
                           onClick={() => onPreset(p.id)}
                           className={cn(
-                            'rounded-2xl border px-3 py-2 text-left',
+                            'min-h-11 rounded-2xl border px-3 py-2 text-left md:min-h-0',
                             presetId === p.id
                               ? 'border-teal-300/30 bg-teal-300/8'
                               : 'border-white/6 bg-white/3 hover:bg-white/6',
@@ -264,7 +282,7 @@ export function ControlDock({
                   key={`${f.generation}-${i}`}
                   type="button"
                   onClick={() => onRevive(i)}
-                  className="mb-1.5 flex w-full items-center justify-between rounded-xl bg-white/4 px-2.5 py-2 text-left hover:bg-white/8"
+                  className="mb-1.5 flex min-h-11 w-full items-center justify-between rounded-xl bg-white/4 px-2.5 py-2 text-left hover:bg-white/8 md:min-h-0"
                 >
                   <span className="text-[11px] text-zinc-300">
                     Art {Math.round(f.species)} · Gen {Math.round(f.generation)}
@@ -291,6 +309,7 @@ export function ControlDock({
         </div>
       </div>
     </aside>
+    </>
   )
 }
 
@@ -355,7 +374,7 @@ function Section({
       <button
         type="button"
         onClick={() => setOpenId(open ? '' : id)}
-        className="flex w-full items-center justify-between py-2 text-left text-[12px] tracking-wide text-zinc-300"
+        className="flex min-h-11 w-full items-center justify-between py-2 text-left text-[12px] tracking-wide text-zinc-300 md:min-h-0"
       >
         {title}
         <ChevronDown size={14} className={cn('text-zinc-500 transition-transform', open && 'rotate-180')} />
@@ -367,7 +386,7 @@ function Section({
 
 function Toggle({ label, on, onClick }: { label: string; on: boolean; onClick: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex w-full items-center justify-between py-1.5 text-[11px] text-zinc-400">
+    <button type="button" onClick={onClick} className="flex min-h-11 w-full items-center justify-between py-1.5 text-[11px] text-zinc-400 md:min-h-0">
       {label}
       <span className={cn('h-4 w-7 rounded-full', on ? 'bg-teal-300/70' : 'bg-white/10')}>
         <span className={cn('block h-4 w-4 rounded-full bg-white transition-transform', on ? 'translate-x-3' : 'translate-x-0')} />
@@ -402,7 +421,7 @@ function SavePanel({
             <div className="mb-1.5 flex items-center justify-between">
               <span className="font-mono text-[10px] text-zinc-500">Slot {i + 1}</span>
               {s ? (
-                <button type="button" onClick={() => onFavorite(i)} className={s.favorite ? 'text-amber-300' : 'text-zinc-600'}>
+                <button type="button" onClick={() => onFavorite(i)} className={cn('flex min-h-11 min-w-11 items-center justify-center md:min-h-0 md:min-w-0', s.favorite ? 'text-amber-300' : 'text-zinc-600')}>
                   <Star size={12} />
                 </button>
               ) : null}
@@ -416,21 +435,21 @@ function SavePanel({
               }}
             />
             <div className="flex flex-wrap gap-1.5">
-              <button type="button" className="rounded-lg bg-white/8 px-2 py-1 text-[10px]" onClick={() => onSave(i, s?.name || `Welt ${i + 1}`)}>
+              <button type="button" className="min-h-11 rounded-lg bg-white/8 px-3 text-[12px] md:min-h-0 md:px-2 md:py-1 md:text-[10px]" onClick={() => onSave(i, s?.name || `Welt ${i + 1}`)}>
                 Speichern
               </button>
               <button
                 type="button"
-                className="rounded-lg bg-white/8 px-2 py-1 text-[10px] disabled:opacity-30"
+                className="min-h-11 rounded-lg bg-white/8 px-3 text-[12px] disabled:opacity-30 md:min-h-0 md:px-2 md:py-1 md:text-[10px]"
                 disabled={!s}
                 onClick={() => onLoad(i)}
               >
                 Laden
               </button>
-              <button type="button" className="rounded-lg bg-white/8 p-1 text-zinc-400 disabled:opacity-30" disabled={!s} onClick={() => onExport(i)}>
+              <button type="button" className="flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-white/8 text-zinc-400 disabled:opacity-30 md:min-h-0 md:min-w-0 md:p-1" disabled={!s} onClick={() => onExport(i)}>
                 <Download size={12} />
               </button>
-              <button type="button" className="rounded-lg bg-white/8 p-1 text-zinc-400 disabled:opacity-30" disabled={!s} onClick={() => onClear(i)}>
+              <button type="button" className="flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-white/8 text-zinc-400 disabled:opacity-30 md:min-h-0 md:min-w-0 md:p-1" disabled={!s} onClick={() => onClear(i)}>
                 <Trash2 size={12} />
               </button>
             </div>
@@ -440,7 +459,7 @@ function SavePanel({
           </div>
         )
       })}
-      <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-dashed border-white/10 px-2 py-2 text-[11px] text-zinc-500">
+      <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-dashed border-white/10 px-2 py-2 text-[11px] text-zinc-500 md:min-h-0">
         <Upload size={12} /> Import JSON
         <input
           type="file"

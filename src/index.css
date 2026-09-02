@@ -70,6 +70,23 @@ select {
   background: #f4f1ea;
 }
 
+@media (max-width: 767px) {
+  .anima-slider {
+    height: 44px;
+  }
+
+  .anima-slider::-webkit-slider-thumb {
+    width: 28px;
+    height: 28px;
+    margin-top: -12.5px;
+  }
+
+  .anima-slider::-moz-range-thumb {
+    width: 28px;
+    height: 28px;
+  }
+}
+
 .panel {
   background: rgba(8, 9, 14, 0.72);
   backdrop-filter: blur(18px);
