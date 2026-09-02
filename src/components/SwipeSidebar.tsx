@@ -1,8 +1,6 @@
 import { useRef, useState, type PointerEvent, type ReactNode } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 const SNAP = 48
-const TAP = 10
 
 export type DockStage = 'narrow' | 'wide'
 
@@ -20,9 +18,7 @@ export function SwipeSidebar({
   children: ReactNode
 }) {
   const startX = useRef<number | null>(null)
-  const startY = useRef(0)
   const dxRef = useRef(0)
-  const dyRef = useRef(0)
   const stageRef = useRef(stage)
   const [dx, setDx] = useState(0)
   const [dragging, setDragging] = useState(false)
@@ -31,7 +27,6 @@ export function SwipeSidebar({
   const reset = () => {
     startX.current = null
     dxRef.current = 0
-    dyRef.current = 0
     setDragging(false)
     setDx(0)
   }
@@ -39,34 +34,19 @@ export function SwipeSidebar({
   const finish = () => {
     if (startX.current == null) return
     const movedX = dxRef.current
-    const movedY = dyRef.current
     const st = stageRef.current
     reset()
 
-    if (Math.abs(movedX) < TAP && Math.abs(movedY) < TAP) {
-      if (st === 'wide') onCollapse()
-      else onExpand()
-      return
-    }
+    if (Math.abs(movedX) < SNAP) return
 
-    if (Math.abs(movedX) >= Math.abs(movedY)) {
-      if (st === 'wide' && movedX > SNAP) onCollapse()
-      else if (st === 'narrow' && movedX > SNAP) onClose()
-      else if (st === 'narrow' && movedX < -SNAP) onExpand()
-      return
-    }
-
-    if (movedY > SNAP) {
-      if (st === 'wide') onCollapse()
-      else onClose()
-    }
+    if (st === 'wide' && movedX > SNAP) onCollapse()
+    else if (st === 'narrow' && movedX > SNAP) onClose()
+    else if (st === 'narrow' && movedX < -SNAP) onExpand()
   }
 
   const down = (e: PointerEvent<HTMLDivElement>) => {
     startX.current = e.clientX
-    startY.current = e.clientY
     dxRef.current = 0
-    dyRef.current = 0
     setDragging(true)
     e.currentTarget.setPointerCapture(e.pointerId)
     e.stopPropagation()
@@ -75,9 +55,7 @@ export function SwipeSidebar({
   const move = (e: PointerEvent<HTMLDivElement>) => {
     if (startX.current == null) return
     const rawX = e.clientX - startX.current
-    const rawY = e.clientY - startY.current
     dxRef.current = rawX
-    dyRef.current = rawY
     setDx(rawX)
   }
 
@@ -106,13 +84,11 @@ export function SwipeSidebar({
         onPointerMove={move}
         onPointerUp={finish}
         onPointerCancel={finish}
+        onClick={(e) => e.preventDefault()}
         role="separator"
-        aria-label={stage === 'wide' ? 'Schmaler wischen' : 'Breiter wischen'}
+        aria-label={stage === 'wide' ? 'Nach rechts wischen zum Verkleinern' : 'Nach links wischen zum Verbreitern'}
       >
         <span className="h-10 w-1 rounded-full bg-white/40" />
-        <span className="mt-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/45 text-zinc-200">
-          {stage === 'wide' ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
-        </span>
       </div>
       <div className="flex h-full min-h-0 w-full min-w-0 flex-col pl-5">{children}</div>
     </div>

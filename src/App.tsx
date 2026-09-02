@@ -9,9 +9,14 @@ import { defaultParams, DEFAULT_MATRIX, type ParamKey } from '@/lib/params'
 import { PRESETS } from '@/lib/presets'
 import { exportSlot, importSlot, loadSlots, persistSlots, writeAutosave, type SaveSlot } from '@/lib/saves'
 import { COMPLEXITY_TOOLS, FIRST_LIGHT_COUNT, loadGuide, saveGuide } from '@/lib/tutorial'
-import { Renderer, type VisualSettings } from '@/render/renderer'
+import { Renderer, type RenderFps, type VisualSettings } from '@/render/renderer'
 
 const VIS_KEY = 'lifeki.visual.v1'
+
+/** Simulation clock: constant 60 Hz, independent of display / touch / render cap. */
+const SIM_HZ = 60
+const SIM_MS = 1000 / SIM_HZ
+const MAX_SIM_STEPS = 5
 
 const DEFAULT_VISUAL: VisualSettings = {
   trails: 0.66,
@@ -21,6 +26,12 @@ const DEFAULT_VISUAL: VisualSettings = {
   signals: true,
   biomes: true,
   beautyMode: false,
+  renderFps: 60,
+}
+
+function parseRenderFps(value: unknown): RenderFps {
+  if (value === 30 || value === 60 || value === 120 || value === 'auto') return value
+  return 60
 }
 
 function loadVisual(): VisualSettings {
@@ -28,7 +39,7 @@ function loadVisual(): VisualSettings {
     const raw = localStorage.getItem(VIS_KEY)
     if (!raw) return { ...DEFAULT_VISUAL }
     const data = JSON.parse(raw) as Partial<VisualSettings>
-    return { ...DEFAULT_VISUAL, ...data }
+    return { ...DEFAULT_VISUAL, ...data, renderFps: parseRenderFps(data.renderFps) }
   } catch {
     return { ...DEFAULT_VISUAL }
   }
@@ -175,56 +186,75 @@ export default function App() {
   }, [worldSize])
 
   useEffect(() => {
-    const FRAME_MS = 1000 / 60
     let frames = 0
     let last = performance.now()
-    let acc = 0
+    let simAcc = 0
+    let renderAcc = 0
     let fpsAt = last
     let hud = 0
+    const applyIfHeld = () => {
+      const held = pointerRef.current
+      if (held.down && held.dragged && isContinuous(toolRef.current)) {
+        applyHeldTool(held.x, held.y)
+      }
+    }
     const tick = (now: number) => {
       rafRef.current = requestAnimationFrame(tick)
-      const raw = Math.min(50, now - last)
+      const elapsed = Math.min(80, now - last)
       last = now
-      acc += raw
-      if (acc < FRAME_MS) return
-      acc = Math.min(acc, FRAME_MS * 2)
-      acc -= FRAME_MS
       const engine = engineRef.current
       const renderer = rendererRef.current
-      if (engine && renderer) {
-        const { w, h } = worldSize()
-        const held = pointerRef.current
-        if (held.down && held.dragged && isContinuous(toolRef.current)) {
-          applyHeldTool(held.x, held.y)
+      if (!engine || !renderer) return
+
+      if (pausedRef.current) {
+        simAcc += elapsed
+        if (simAcc >= SIM_MS) {
+          applyIfHeld()
+          simAcc = 0
         }
-        if (!pausedRef.current) {
+      } else {
+        simAcc += elapsed
+        let steps = 0
+        while (simAcc >= SIM_MS && steps < MAX_SIM_STEPS) {
+          applyIfHeld()
           engine.setParams(paramsRef.current)
           engine.step()
           renderer.ingestEvents(engine.events())
+          simAcc -= SIM_MS
+          steps++
         }
+      }
+
+      renderAcc += elapsed
+      const cap = visualRef.current.renderFps
+      const renderMs = cap === 'auto' ? 0 : 1000 / cap
+      const shouldDraw = cap === 'auto' || renderAcc >= renderMs
+      if (shouldDraw) {
+        if (renderMs > 0) renderAcc %= renderMs
+        else renderAcc = 0
+        const { w, h } = worldSize()
         if (selectedIdRef.current >= 0) {
-          const idx = engine.findId(selectedIdRef.current)
-          selectedRef.current = idx
+          selectedRef.current = engine.findId(selectedIdRef.current)
         }
         renderer.selected = selectedRef.current
         renderer.observer = toolRef.current === 'observe'
         renderer.draw(engine, visualRef.current, engine.stats().day, engine.sim.width() || w, engine.sim.height() || h)
-        placeBrushCursor()
         frames += 1
-        if (now - fpsAt >= 500) {
-          setFps(Math.min(60, Math.round((frames * 1000) / (now - fpsAt))))
-          frames = 0
-          fpsAt = now
-        }
-        if (now - hud > 180) {
-          hud = now
-          setStats(engine.stats())
-          setStepMs(engine.lastStepMs)
-          setMemoryMb(engine.memoryBytes() / 1048576)
-          if (selectedIdRef.current >= 0) {
-            const live = engine.inspectById(selectedIdRef.current)
-            if (live) setInspected(live)
-          }
+      }
+      placeBrushCursor()
+      if (now - fpsAt >= 500) {
+        setFps(Math.round((frames * 1000) / (now - fpsAt)))
+        frames = 0
+        fpsAt = now
+      }
+      if (now - hud > 180) {
+        hud = now
+        setStats(engine.stats())
+        setStepMs(engine.lastStepMs)
+        setMemoryMb(engine.memoryBytes() / 1048576)
+        if (selectedIdRef.current >= 0) {
+          const live = engine.inspectById(selectedIdRef.current)
+          if (live) setInspected(live)
         }
       }
     }

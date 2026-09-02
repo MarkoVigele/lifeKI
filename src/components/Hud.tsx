@@ -23,7 +23,7 @@ export function Hud({
   onOpenTutorial,
 }: Props) {
   const [open, setOpen] = useState(false)
-  const shown = Math.min(60, Math.max(0, fps))
+  const shown = Math.max(0, fps)
 
   return (
     <div className="pointer-events-none absolute left-2 top-[max(0.3rem,env(safe-area-inset-top))] z-20">

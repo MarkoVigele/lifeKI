@@ -2,6 +2,8 @@ import type { Engine } from '@/lib/engine'
 import { hsvCss, hsvToRgb } from '@/lib/utils'
 import { RENDER_STRIDE } from '@/lib/params'
 
+export type RenderFps = 30 | 60 | 120 | 'auto'
+
 export type VisualSettings = {
   trails: number
   glow: number
@@ -10,6 +12,8 @@ export type VisualSettings = {
   signals: boolean
   biomes: boolean
   beautyMode: boolean
+  /** Render cap only. Simulation stays 60 Hz. Default 60. */
+  renderFps: RenderFps
 }
 
 type Burst = { x: number; y: number; hue: number; mag: number; kind: number; age: number; life: number }

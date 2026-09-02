@@ -7,7 +7,14 @@ import { PRESET_CATEGORIES, PRESETS } from '@/lib/presets'
 import { COMPLEXITY_PRESETS, COMPLEXITY_SLIDERS, MAX_COMPLEXITY, MODE_LABELS, MODE_LEVELS, modeFromComplexity } from '@/lib/tutorial'
 import { SLOT_COUNT, type SaveSlot } from '@/lib/saves'
 import { cn } from '@/lib/utils'
-import type { VisualSettings } from '@/render/renderer'
+import type { RenderFps, VisualSettings } from '@/render/renderer'
+
+const RENDER_FPS_OPTIONS: { value: RenderFps; label: string }[] = [
+  { value: 30, label: '30' },
+  { value: 60, label: '60' },
+  { value: 120, label: '120' },
+  { value: 'auto', label: 'Automatisch' },
+]
 
 type Fossil = { species: number; fitness: number; generation: number; hue: number }
 
@@ -197,6 +204,33 @@ export function ControlDock({
           ))}
 
           <Section id="vis" title="Visualisierung" openId={openId} setOpenId={setOpenId}>
+            <div className="mb-1.5 py-0.5">
+              <div className="mb-0.5 text-[10px] leading-tight tracking-wide text-zinc-400">Bildrate</div>
+              <p className="mb-1 hidden text-[10px] leading-snug text-zinc-600 md:block">
+                Nur das Bild. Die Welt läuft fest mit 60 Schritten pro Sekunde — unabhängig vom Display und von Berührung.
+              </p>
+              <div className="grid grid-cols-4 gap-0.5 rounded-lg bg-white/6 p-0.5" role="radiogroup" aria-label="Bildrate">
+                {RENDER_FPS_OPTIONS.map((opt) => {
+                  const active = visual.renderFps === opt.value
+                  return (
+                    <button
+                      key={String(opt.value)}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      title={opt.label}
+                      onClick={() => onVisual({ ...visual, renderFps: opt.value })}
+                      className={cn(
+                        'min-h-8 rounded-md px-0.5 text-[8px] leading-tight md:min-h-7 md:text-[10px]',
+                        active ? 'bg-teal-300/18 text-teal-100' : 'text-zinc-500 hover:text-zinc-300',
+                      )}
+                    >
+                      {opt.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
             <SliderField
               label="Spuren"
               hint="Kurzer Schweif hinter jedem Licht. Links = fast keins, rechts = länger — sie verblassen immer."
