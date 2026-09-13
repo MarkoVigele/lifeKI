@@ -87,6 +87,11 @@ select {
   }
 }
 
+:root {
+  /* GodBar is h-11 plus bottom padding; keep the donate chip above it. */
+  --dock-space: max(4.5rem, calc(3.6rem + env(safe-area-inset-bottom, 0px)));
+}
+
 .panel {
   background: rgba(8, 9, 14, 0.72);
   backdrop-filter: blur(18px);
