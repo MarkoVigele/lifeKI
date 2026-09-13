@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ControlDock } from '@/components/ControlDock'
+import { DonateChip } from '@/components/DonateChip'
 import { GodBar, TOOL_WASM, type ToolId } from '@/components/GodBar'
 import { Hud } from '@/components/Hud'
 import { Inspector } from '@/components/Inspector'
@@ -587,6 +588,7 @@ export default function App() {
             particleCap={visual.particleCap}
             onOpenTutorial={() => setTutorialOpen(true)}
           />
+          <DonateChip />
           <Tutorial
             open={tutorialOpen}
             step={tutorialStep}
